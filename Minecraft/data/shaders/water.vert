@@ -1,0 +1,25 @@
+#version 330 core
+layout (location = 0) in vec3 vertex; // Vertex Position
+layout (location = 1) in vec3 normals; // Normals
+layout (location = 2) in vec2 textureCoords; // Tex Coordinates
+
+uniform vec3 position;
+uniform mat4 projectionView;
+
+out vec2 _texCoords;
+out vec3 _normals;
+
+void main()
+{
+	_texCoords = textureCoords;
+	_normals = normals;
+	
+	mat4 model = mat4(1);
+	model[3] = vec4(position, 1);
+
+	vec3 topVertex = vertex;
+	if(topVertex.y >= 1.0)
+		topVertex.y *= 0.99;
+
+	gl_Position = projectionView * model * vec4(topVertex, 1);
+}
