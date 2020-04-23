@@ -11,6 +11,9 @@ ChunkManager::ChunkManager() {
 	waterTexture = new TileMap("./data/textures/water.png", 16, 1);
 
 	thread = std::thread(&ChunkManager::ChunkLoader, this);
+
+	// TODO: Implement a loading wait
+	std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
 ChunkManager::~ChunkManager() {
@@ -23,9 +26,7 @@ ChunkManager::~ChunkManager() {
 
 // MULTITHREAD TEST
 void ChunkManager::ChunkLoader() {
-	const unsigned int size = 12; 
 	glm::ivec2 lastChunk = glm::ivec2(0);
-
 
 	// Lamdba - Update all neighbours around chunk
 	auto UpdateNeighbours = [this](const int& x, const int& z) {
@@ -49,7 +50,7 @@ void ChunkManager::ChunkLoader() {
 	};
 
 	while(ending == false) {
-		for(int i = 0; i <= size; i++) {
+		for(int i = 0; i <= RENDERING_DISTANCE; i++) {
 			int minX = lastChunk.x + -i;
 			int maxX = lastChunk.x + i;
 			int minZ = lastChunk.y + -i;
@@ -150,19 +151,42 @@ Chunk* ChunkManager::CreateChunk(const glm::ivec2& index) {
 	return chunk;
 }
 
-BlockIDs ChunkManager::GetBlock(const glm::vec3& worldPosition) const {
-	if(worldPosition.y >= Chunk::CHUNK_HEIGHT || worldPosition.y < 0.0f)
+BlockIDs ChunkManager::GetBlock(const float& x, const float& y, const float& z) const {
+	if(y >= Chunk::CHUNK_HEIGHT || y < 0.0f)
 		return BlockIDs::AIR;
 
-	Chunk* chunk = FindChunk(worldPosition);
-	if(chunk)
-		return chunk->GetBlock(worldPosition);
+	Chunk* chunk = FindChunk(x, z);
+	if(!chunk)
+		return BlockIDs::AIR;
 
-	return BlockIDs::AIR;
+	return chunk->GetBlock(x, y, z);
+}
+
+BlockIDs ChunkManager::GetBlock(const glm::vec3& worldPosition) const {
+	return GetBlock(worldPosition.x, worldPosition.y, worldPosition.z);
 }
 
 void ChunkManager::SetBlock(const glm::vec3& worldPosition, const BlockIDs& block) {
 	return SetBlock(worldPosition.x, worldPosition.y, worldPosition.z, block);
+}
+
+void ChunkManager::GetSolidBlocksInArea(const glm::vec3& worldPosition, const glm::vec3& size, std::vector<glm::vec3>& output) {
+	float xMin = glm::floor(worldPosition.x - size.x / 2.0f);
+	float xMax = glm::floor(worldPosition.x + size.x / 2.0f);
+	float yMin = glm::floor(worldPosition.y - size.y / 2.0f);
+	float yMax = glm::floor(worldPosition.y + size.y / 2.0f);
+	float zMin = glm::floor(worldPosition.z - size.z / 2.0f);
+	float zMax = glm::floor(worldPosition.z + size.z / 2.0f);
+
+	for(int x = xMin; x <= xMax; x++) {
+		for(int y = yMin; y <= yMax; y++) {
+			for(int z = zMin; z <= zMax; z++) {
+				if(BlockManager::GetBlockData(GetBlock(x, y, z)).isSolid == true) {
+					output.emplace_back(x, y, z);
+				}
+			}
+		}
+	}
 }
 
 void ChunkManager::SetBlock(const float& x, const float& y, const float& z, const BlockIDs& block) {
@@ -195,6 +219,7 @@ Chunk* ChunkManager::FindChunk(const glm::vec3& worldPosition) const {
 	return (iter != chunks.end()) ? iter->second : nullptr;
 }
 
+// Returns nullptr if chunk doesn't exists, X & Z are worldPosition
 Chunk* ChunkManager::FindChunk(const float& x, const float& z) const {
 	glm::ivec2 key = glm::ivec2(std::floor(x / Chunk::CHUNK_SIZE), std::floor(z / Chunk::CHUNK_SIZE));
 

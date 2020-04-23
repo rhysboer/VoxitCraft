@@ -40,14 +40,15 @@ public:
 	Chunk(glm::ivec2 index, ChunkManager& world);
 	~Chunk();
 
-	// Get a Block Inside the Chunk
-	BlockIDs GetBlock(const float& x, const float& y, const float& z) const; // World Position
+	// Returns the block at position, X, Y & Z are in World Position.
+	BlockIDs GetBlock(const float& x, const float& y, const float& z) const;
 	BlockIDs GetBlock(const glm::vec3& worldPosition) const;
+
 	// Returns air if the block is outside of the local position inside the chunk
 	BlockIDs GetBlockLocal(const float& x, const float& y, const float& z) const;
 
-	// Set Block Inside Chunk
-	void SetBlock(const int& x, const int& y, const int& z, const BlockIDs& block); // World Position
+	// Set Block Inside Chunk. X, Y & Z are in World Position.
+	void SetBlock(const int& x, const int& y, const int& z, const BlockIDs& block);
 	void SetBlock(const glm::vec3& worldPosition, const BlockIDs& block);
 
 	friend class ChunkManager;

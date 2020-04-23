@@ -55,12 +55,10 @@ struct BlockData {
 	TextureIndex texture;
 	BlockIDs id;
 	const char* name;
+	bool isSolid;
 	bool isTransparent;
 
-	BlockData(BlockIDs _id, const char* _name, bool transparent, TextureIndex texture) {
-		this->id = _id;
-		this->name = _name;
-		this->isTransparent = transparent;
+	BlockData(BlockIDs _id, const char* _name, bool transparent, bool solid, TextureIndex texture) : id(_id), name(_name), isTransparent(transparent), isSolid(solid) {
 		this->texture = texture;
 	}
 };

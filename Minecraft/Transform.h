@@ -23,9 +23,10 @@ public:
 	void SetParent(Transform* parent);
 
 	void Translate(const glm::vec3& direction);
+	void Translate(const float& x, const float& y, const float& z);
 
 	glm::vec3 GetPosition() const;
-	glm::mat4 GetTransform();
+	glm::mat4 GetMatrix();
 
 	void SetDirty();
 

@@ -78,6 +78,14 @@ void Transform::Translate(const glm::vec3& direction) {
 	this->position += direction;
 }
 
+void Transform::Translate(const float& x, const float& y, const float& z) {
+	SetDirty();
+
+	this->position.x += x;
+	this->position.y += y;
+	this->position.z += z;
+}
+
 void Transform::SetDirty() {
 	isDirty = true;
 }
@@ -86,7 +94,7 @@ glm::vec3 Transform::GetPosition() const {
 	return position;
 }
 
-glm::mat4 Transform::GetTransform() {
+glm::mat4 Transform::GetMatrix() {
 	UpdateTransform();
 
 	return transform;
@@ -98,7 +106,7 @@ void Transform::UpdateTransform() {
 	transform = glm::scale(transform, scale);
 
 	if(parent)
-		transform = parent->GetTransform() * transform;
+		transform = parent->GetMatrix() * transform;
 
 	isDirty = false;
 }

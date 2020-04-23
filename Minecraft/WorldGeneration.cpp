@@ -42,6 +42,9 @@ void WorldGeneration::CreateChunkWorldData(Chunk& chunk) {
 				Biome* biome = GetBiome(x, z);
 				BlockIDs block = biome->GetBlock(height);
 
+				//if(y == 0)
+				//	chunk.SetBlock(blockIndex, BlockIDs::GRASS);
+
 				if(y < 16 && height == 0) {
 					chunk.SetBlock(blockIndex, BlockIDs::SAND);
 				} else if(y > mapHeight && y < 15) {
@@ -49,7 +52,7 @@ void WorldGeneration::CreateChunkWorldData(Chunk& chunk) {
 				} else if(chunk.blocks[blockIndex] == BlockIDs::AIR) {
 					chunk.SetBlock(blockIndex, block);
 				}
-
+				
 				if(height == 1 && y > waterLevel) {
 					if(biome->GetGenerationParameters().structureDensity <= 0) 
 						continue;
@@ -61,7 +64,6 @@ void WorldGeneration::CreateChunkWorldData(Chunk& chunk) {
 			}
 		}
 	}
-
 
 	for(int i = 0; i < treePositions.size(); i++) {
 		Biome* biome = GetBiome(treePositions[i].x, treePositions[i].z);

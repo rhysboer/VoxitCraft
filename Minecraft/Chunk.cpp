@@ -92,6 +92,7 @@ void Chunk::SetBlock(const unsigned int& index, const BlockIDs& id) {
 
 //							[ GET BLOCKS ]
 
+// Returns the block at position, X, Y & Z are in World Position.
 BlockIDs Chunk::GetBlock(const float& x, const float& y, const float& z) const {
 	return GetBlock(glm::vec3(x, y, z));
 }

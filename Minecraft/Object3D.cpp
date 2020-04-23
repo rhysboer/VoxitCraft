@@ -1,7 +1,7 @@
 #include "Object3D.h"
 
-Object3D::Object3D(const glm::vec3& position, const std::vector<float>& vertex_data, const std::vector<int>& vertex_data_attributes, const std::vector<unsigned int>& indices) {
-	this->SetPosition(position);
+Object3D::Object3D(const glm::vec3& position, const std::vector<float>& vertex_data, const std::vector<int>& vertex_data_attributes, const std::vector<unsigned int>& indices) : transform() {
+	this->transform.SetPosition(position);
 
 	// Generate Vertex & Buffer Array
 	glGenVertexArrays(1, &object.VAO);
@@ -45,7 +45,7 @@ Object3D::Object3D(const glm::vec3& position, const std::vector<float>& vertex_d
 }
 
 Object3D::~Object3D() {
-	// Delete object
+	// TODO: Delete object data
 }
 
 
@@ -95,13 +95,13 @@ Object3D* Object3D::CreateObject_Plane(const glm::vec3& position, const unsigned
 Object3D* Object3D::CreateObject_Cube(const glm::vec3& position) {
 	std::vector<float> vertices = std::vector<float>({
 		/* FRONT */
-		-1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-		-1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-		 1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		 1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+		-1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
 						   
-		 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-		 1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-		-1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+		-1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
 
 		/* RIGHT */
 		 1.0f,-1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
@@ -122,22 +122,22 @@ Object3D* Object3D::CreateObject_Cube(const glm::vec3& position) {
 		-1.0f, 1.0f,-1.0f, 0.0f, 0.0f,-1.0f, 0.0f, 1.0f,
 
 		/* LEFT */
-		-1.0f,-1.0f,-1.0f,-1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-		-1.0f, 1.0f,-1.0f,-1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-		-1.0f,-1.0f, 1.0f,-1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+		-1.0f,-1.0f, 1.0f,-1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		-1.0f, 1.0f, 1.0f,-1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		-1.0f,-1.0f,-1.0f,-1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
 						  
-		-1.0f, 1.0f, 1.0f,-1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-		-1.0f,-1.0f, 1.0f,-1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,-1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		-1.0f, 1.0f,-1.0f,-1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+		-1.0f,-1.0f,-1.0f,-1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f,-1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
 
 		/* TOP */
-		-1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-		 1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-		-1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+		 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		-1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
 						  
-		 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-		 1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		 1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+		 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
 
 		 /* BOT */
 		-1.0f,-1.0f,-1.0f, 0.0f,-1.0f, 0.0f, 0.0f, 0.0f,
@@ -253,7 +253,7 @@ void Object3D::Render(const glm::mat4& projectionView) {
 
 	glBindVertexArray(object.VAO);
 
-	shader->SetMatrix4(SHADER_MODEL, this->GetTransform());
+	shader->SetMatrix4(SHADER_MODEL, transform.GetMatrix());
 	shader->SetMatrix4(SHADER_PROJECTIONVIEW, projectionView);
 
 	if(object.EBO <= 0)
@@ -283,4 +283,12 @@ void Object3D::SetShader(Shader* shader) {
 
 Shader* Object3D::GetShader() const {
 	return shader;
+}
+
+glm::vec3 Object3D::GetPosition() {
+	return transform.GetPosition();
+}
+
+Transform& Object3D::GetTransform() {
+	return transform;
 }

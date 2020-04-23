@@ -8,8 +8,9 @@
 #define SHADER_MODEL "model"
 #define SHADER_PROJECTIONVIEW "projectionView"
 
-class Object3D : public Transform {
+class Object3D {
 public:
+
 	Object3D(const glm::vec3& position, const std::vector<float>& vertex_data, const std::vector<int>& vertex_data_attributes, const std::vector<unsigned int>& indices = std::vector<unsigned int>());
 	~Object3D();
 
@@ -22,7 +23,6 @@ public:
 
 #pragma endregion
 
-
 	void Render(const glm::mat4& projectionView);
 	void Render(Camera& camera);
 	void RawRender(Camera& camera);
@@ -32,6 +32,8 @@ public:
 	
 	/* Getters */
 	Shader* GetShader() const;
+	glm::vec3 GetPosition();
+	Transform& GetTransform();
 
 private:
 	struct ObjectData {
@@ -42,5 +44,6 @@ private:
 		unsigned int indicesCount;
 	} object;
 
+	Transform transform;
 	Shader* shader;
 };

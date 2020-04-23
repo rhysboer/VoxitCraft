@@ -12,7 +12,6 @@
 
 #include "TileMap.h"
 
-#include "Object3D.h"
 #include "Engine.h"
 
 class ChunkManager {
@@ -25,7 +24,12 @@ public:
 	void Render(Camera& camera);
 
 
+	// Returns a block in the world, will return AIR if bad position. X, Y & Z are in World Position.
+	BlockIDs GetBlock(const float& x, const float& y, const float& z) const;
 	BlockIDs GetBlock(const glm::vec3& worldPosition) const;
+
+	// Returns blocks inside area that are solid
+	void GetSolidBlocksInArea(const glm::vec3& worldPosition, const glm::vec3& size, std::vector<glm::vec3>& output);
 
 	void SetBlock(const float& x, const float& y, const float& z, const BlockIDs& block);
 	void SetBlock(const glm::vec3& worldPosition, const BlockIDs& block);
@@ -50,6 +54,8 @@ private:
 	glm::ivec2 PositionToChunk(const glm::vec3& worldPosition) const;
 
 private:
+	const unsigned int RENDERING_DISTANCE = 2;
+	
 	std::unordered_map<glm::ivec2, Chunk*> chunks = std::unordered_map <glm::ivec2, Chunk*>();
 	Chunk* cacheChunk = nullptr;
 
