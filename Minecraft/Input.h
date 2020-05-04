@@ -16,7 +16,9 @@ public:
 
 	static bool IsMouseKeyDown(const int button);
 	static bool IsKeyDown(const int key);			// Key held down
-	static bool IsKeyPressed(const int key);		// Key pressed 
+	static bool IsKeyPressed(const int key);		// Key pressed
+
+	static void DisableCursor(const bool& disable);
 
 protected:
 	static void SetCallbacks(GLFWwindow* window);

@@ -22,9 +22,9 @@ public:
 
 	void SetFloat(const char* name, float value);
 	void SetInt(const char* name, int value);
-	void SetMatrix4(const char* name, glm::mat4 value);
-	void SetVector3(const char* name, glm::vec3 value);
-	void SetVector4(const char* name, glm::vec4 value);
+	void SetMatrix4(const char* name, const glm::mat4& value);
+	void SetVector3(const char* name, const glm::vec3& value);
+	void SetVector4(const char* name, const glm::vec4& value);
 
 	void SetTextureUnit(const char* name, const unsigned int& textureUnit);
 

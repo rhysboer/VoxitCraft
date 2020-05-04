@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "Camera.h"
+#include "BaseCamera.h"
 
 class Entity;
 
@@ -8,7 +8,7 @@ class EntityManager {
 public:
 	friend class Entity;
 
-	static void Render(Camera& camera);
+	static void Render(BaseCamera& camera);
 	static void Update();
 
 private:

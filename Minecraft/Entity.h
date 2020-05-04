@@ -6,19 +6,15 @@
 
 class World;
 class EntityManager;
-class EntityController;
 
 class Entity {
 public:
 	friend class EntityManager;
-	friend class EntityController;
-
-	Entity(const char* modelPath, const glm::vec3& position, EntityController* controller = nullptr);
+	Entity(const glm::vec3& position);
 	~Entity();
 
-	void SetController(EntityController* controller);
-
-	const glm::vec3& GetPosition() const;
+	glm::vec3 GetPosition() const;
+	glm::vec3 GetHeadPosition() const;
 	const bool IsGrounded() const;
 
 	void SetPosition();
@@ -33,7 +29,7 @@ public:
 	void AddForce(const glm::vec3& direction, const float& force);
 	void AddForce(const float& x, const float& y, const float& z, const float& force);
 
-	// Move an entity in a normalized direction multipled by its speed
+	// Move an entity in a normalized direction, multipled by its speed
 	void Move(const glm::vec3& direction);
 	void Move(const float& x, const float& y, const float& z);
 
@@ -41,17 +37,19 @@ protected:
 
 	// Functions 
 	void MoveEntity(const glm::vec3& velocity);
-	void OnUpdate();
-	void OnRender(Camera& camera);
-	void OnCollision(const glm::vec3& normal);
+
+	virtual void OnUpdate();
+	virtual void OnRender(BaseCamera& camera);
+	virtual void OnCollision(const glm::vec3& normal);
 
 	// Variables
-	EntityController* controller = nullptr;
+	glm::vec3 headOffset;
 	Object3D* model;
 	float movementSpeed;
 	bool usePhysics;
 	bool isGrounded;
 
+	glm::vec3 size;
 	glm::vec3 velocity;
 	glm::vec3 direction;
 };

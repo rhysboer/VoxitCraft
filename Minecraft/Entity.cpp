@@ -1,17 +1,14 @@
 #include "Entity.h"
 #include "EntityManager.h"
-#include "EntityController.h"
 #include "World.h"
 
-Entity::Entity(const char* modelPath, const glm::vec3& position, EntityController* controller) : usePhysics(true), isGrounded(false), movementSpeed(6), velocity(0), direction(0) {
+Entity::Entity(const glm::vec3& position) : usePhysics(true), isGrounded(false), movementSpeed(8), velocity(0), direction(0), headOffset(0), size(1) {
 	EntityManager::AddEntity(*this);
 	
+	// TODO: Make this adjustable with models
 	model = Object3D::CreateObject_Cube(position);
 	model->GetTransform().SetPosition(position);
 	model->GetTransform().SetScale(0.5f);
-	
-	if(controller != nullptr)
-		SetController(controller);
 }
 
 Entity::~Entity() {
@@ -21,13 +18,12 @@ Entity::~Entity() {
 	delete model;
 }
 
-void Entity::SetController(EntityController* controller) {
-	this->controller = controller;
-	this->controller->RegisterEntity(*this);
+glm::vec3 Entity::GetPosition() const {
+	return model->GetPosition();
 }
 
-const glm::vec3& Entity::GetPosition() const {
-	return model->GetPosition();
+glm::vec3 Entity::GetHeadPosition() const {
+	return model->GetPosition() + headOffset;
 }
 
 const bool Entity::IsGrounded() const {
@@ -51,9 +47,6 @@ void Entity::AddForce(const float& x, const float& y, const float& z, const floa
 }
 
 void Entity::OnUpdate() {
-	if(controller)
-		controller->OnUpdate();
-
 	// Input Velocity
 	if(direction != glm::vec3(0))
 		MoveEntity((glm::normalize(direction) * Time::DeltaTime()) * movementSpeed);
@@ -66,8 +59,8 @@ void Entity::OnUpdate() {
 	direction = glm::vec3(0);
 }
 
-void Entity::OnRender(Camera& camera) {
-	model->Render(camera);
+void Entity::OnRender(BaseCamera& camera) {
+	//model->Render(camera);
 }
 
 void Entity::Move(const glm::vec3& direction) {
@@ -79,7 +72,6 @@ void Entity::Move(const float& x, const float& y, const float& z) {
 }
 
 void Entity::MoveEntity(const glm::vec3& velocity) {
-	glm::vec3 size = glm::vec3(1.0f, 1.0f, 1.0f);
 	int axes[3] = { 0, 2, 1 };
 
 	int maxInterations = 10;
@@ -133,6 +125,5 @@ void Entity::OnCollision(const glm::vec3& normal) {
 
 	if(normal.y == 1.0f) {
 		isGrounded = true;
-		velocity.y = 0.0f;
 	}
 }

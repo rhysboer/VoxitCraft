@@ -1,14 +1,24 @@
 #pragma once
 #include "Engine.h"
 #include "World.h"
+#include "PostProcess.h"
 
-class Application : public Engine{
+#include "Camera.h"
+
+enum class PostProcessEffect {
+	NORMAL,
+	UNDER_WATER
+};
+
+class Application : public Engine {
 public:
 
-	Camera* camera;
-	World* world;
+	static Application& Get();
+
+	static void SetPostProcessEffect(const PostProcessEffect& effect);
 
 private:
+
 	// Inherited via Engine
 	virtual void OnStart() override;
 	virtual void OnEnd() override;
@@ -16,12 +26,18 @@ private:
 	virtual void OnRender() override;
 
 private:
+	
+	static Application* app;
+	
+	PostProcessEffect effect;
+	PostProcess* postProcessing;
+	Framebuffer* framebuffer;
 
+	Camera* camera;
+	World* world;
+
+
+	bool lockCursor = true;
 	bool isWireFrame = false;
-
-
-	// DEBUG
-	glm::vec3 pos = glm::vec3();
-
 };
 

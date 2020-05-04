@@ -5,9 +5,9 @@
 #include "Engine.h"
 
 enum class FramebufferType {
-	TEXTURE_RGB = 0x1907,
-	TEXTURE_RGBA = 0x1908,
-	DEPTH = 0x1902
+	COLOUR, // Colour texture with renderbuffer depth
+	DEPTH, // Depth texture
+	COLOUR_AND_DEPTH, // Colour and depth texture
 };
 
 class Framebuffer {
@@ -18,15 +18,23 @@ public:
 	void Render_Begin();
 	void Render_End();
 
-	void BindTexture(const int& i) const;
+	// If texture equals COLOUR_AND_DEPTH, colour will be bound to INDEX and depth will be bount to INDEX + 1
+	void BindTextures(const unsigned int& index) const;
+	void BindTextureColour(const unsigned int& index) const;
+	void BindTextureDepth(const unsigned int& index) const;
+
 	unsigned int GetTexture() const;
 
 private:
 	glm::vec2 framebufferSize;
 	glm::vec2 screenSize;
 
-	unsigned int fbo;
+	FramebufferType type;
+
+	unsigned int fbo; // Framebuffer
 	unsigned int rbo; // Renderbuffer
-	unsigned int texture;
+
+	unsigned int colourTexture;
+	unsigned int depthTexture;
 };
 

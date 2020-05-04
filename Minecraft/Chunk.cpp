@@ -14,7 +14,7 @@ Chunk::~Chunk() {
 	// Destroy chunk
 }
 
-void Chunk::Render(Shader& solidShader, Shader& waterShader) {
+void Chunk::Render(Shader& solidShader) {
 	if(solidMesh.vao == 0)
 		return;
 

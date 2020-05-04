@@ -262,11 +262,11 @@ void Object3D::Render(const glm::mat4& projectionView) {
 		glDrawElements(GL_TRIANGLES, object.indicesCount, GL_UNSIGNED_INT, 0);
 }
 
-void Object3D::Render(Camera& camera) {
+void Object3D::Render(BaseCamera& camera) {
 	Render(camera.ProjectionView());
 }
 
-void Object3D::RawRender(Camera& camera) {
+void Object3D::RawRender(BaseCamera& camera) {
 	if(!shader) return;
 
 	glBindVertexArray(object.VAO);

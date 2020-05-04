@@ -49,12 +49,6 @@
     <Filter Include="Header Files\Entity">
       <UniqueIdentifier>{380943e4-2efb-46a9-97ae-f638ae5226ac}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Entity\Controllers">
-      <UniqueIdentifier>{8c1daad6-8a7c-45f8-bce3-34e15fafef3d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Entity\Controllers">
-      <UniqueIdentifier>{d3b1b84f-9351-44b6-a22f-c9d1932dd56a}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -83,9 +77,6 @@
     </ClCompile>
     <ClCompile Include="imgui_widgets.cpp">
       <Filter>Source Files\Engine\Imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Source Files\Engine</Filter>
     </ClCompile>
     <ClCompile Include="Engine.cpp">
       <Filter>Source Files\Engine</Filter>
@@ -168,11 +159,20 @@
     <ClCompile Include="EntityManager.cpp">
       <Filter>Source Files\Entity</Filter>
     </ClCompile>
-    <ClCompile Include="EntityController.cpp">
-      <Filter>Source Files\Entity\Controllers</Filter>
+    <ClCompile Include="EntityPlayer.cpp">
+      <Filter>Source Files\Entity</Filter>
     </ClCompile>
-    <ClCompile Include="ECPlayer.cpp">
-      <Filter>Source Files\Entity\Controllers</Filter>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseCamera.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="FPSCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcess.cpp">
+      <Filter>Source Files\Engine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -299,11 +299,17 @@
     <ClInclude Include="EntityManager.h">
       <Filter>Header Files\Entity</Filter>
     </ClInclude>
-    <ClInclude Include="EntityController.h">
-      <Filter>Header Files\Entity\Controllers</Filter>
+    <ClInclude Include="EntityPlayer.h">
+      <Filter>Header Files\Entity</Filter>
     </ClInclude>
-    <ClInclude Include="ECPlayer.h">
-      <Filter>Header Files\Entity\Controllers</Filter>
+    <ClInclude Include="BaseCamera.h">
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="FPSCamera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcess.h">
+      <Filter>Header Files\Engine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

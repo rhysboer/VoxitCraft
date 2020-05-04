@@ -1,8 +1,10 @@
 #include "ChunkManager.h"
+#include "World.h"
 
 ChunkManager::ChunkManager() {
 	solidShader = ShaderManager::AddShader("voxel", ShaderManager::ShaderType::GRAPHIC);
 	waterShader = ShaderManager::AddShader("water", ShaderManager::ShaderType::GRAPHIC);
+	depthShader = ShaderManager::AddShader("defaultDepth", ShaderManager::ShaderType::GRAPHIC);
 
 	solidShader->SetInt("texture1", 0);
 	waterShader->SetInt("texture1", 0);
@@ -84,7 +86,7 @@ void ChunkManager::ChunkLoader() {
 
 			std::this_thread::sleep_for(std::chrono::microseconds(50));
 			
-			glm::ivec2 currChunk = glm::ivec2(position.x / 16, position.z / 16);
+			glm::ivec2 currChunk = glm::ivec2(World::GetPlayer().GetPosition().x / 16, World::GetPlayer().GetPosition().z / 16);
 			if(currChunk != lastChunk) {
 				i = -1;
 				lastChunk = currChunk;
@@ -99,9 +101,8 @@ void ChunkManager::ChunkLoader() {
 void ChunkManager::Update() {
 }
 
-void ChunkManager::Render(Camera& camera) {
+void ChunkManager::Render(BaseCamera& camera) {
 	std::unique_lock<std::mutex> lock(mutex);
-
 
 	// Solid Rendering
 	terrainTexture->BindTexture(0);
@@ -116,7 +117,7 @@ void ChunkManager::Render(Camera& camera) {
 			iter->second->CreateMesh();
 		}
 
-		iter->second->Render(*solidShader, *waterShader);
+		iter->second->Render(*solidShader);
 	}
 
 	// Opaque Rendering
@@ -124,6 +125,7 @@ void ChunkManager::Render(Camera& camera) {
 	waterShader->SetMatrix4("projectionView", camera.ProjectionView());
 	waterShader->SetFloat("time", Time::TotalTime());
 
+	glDisable(GL_CULL_FACE);
 	iter = chunks.begin();
 	for(; iter != chunks.end(); iter++) {
 		if(!iter->second->hasWorldData)
@@ -135,10 +137,42 @@ void ChunkManager::Render(Camera& camera) {
 
 		iter->second->RenderOpaque(*waterShader);
 	}
+	glEnable(GL_CULL_FACE);
+}
 
+// RENDER with depth shader
+void ChunkManager::DepthRender(BaseCamera& camera) {
+	std::unique_lock<std::mutex> lock(mutex);
 
-	// TEST
-	position = camera.Position();
+	// Solid Rendering
+	terrainTexture->BindTexture(0);
+	depthShader->SetMatrix4("projectionView", camera.ProjectionView());
+
+	std::unordered_map<glm::ivec2, Chunk*>::iterator iter = chunks.begin();
+	for(; iter != chunks.end(); iter++) {
+		if(!iter->second->hasWorldData)
+			continue;
+
+		if(iter->second->meshUpdate == true) {
+			iter->second->CreateMesh();
+		}
+
+		iter->second->Render(*depthShader);
+	}
+
+	glDisable(GL_CULL_FACE);
+	iter = chunks.begin();
+	for(; iter != chunks.end(); iter++) {
+		if(!iter->second->hasWorldData)
+			continue;
+
+		if(iter->second->meshUpdate == true) {
+			iter->second->CreateMesh();
+		}
+
+		iter->second->RenderOpaque(*waterShader);
+	}
+	glEnable(GL_CULL_FACE);
 }
 
 Chunk* ChunkManager::CreateChunk(const glm::ivec2& index) {

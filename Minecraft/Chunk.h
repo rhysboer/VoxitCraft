@@ -3,7 +3,6 @@
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 #include "BlockManager.h"
-#include "Camera.h"
 #include "Shader.h"
 #include "Util.h"
 
@@ -63,7 +62,7 @@ private:
 	void CreateMesh(); // Turn mesh data into a mesh
 	
 	void OnTick();
-	void Render(Shader& solidShader, Shader& waterShader);
+	void Render(Shader& solidShader);
 	void RenderOpaque(Shader& waterShader);
 
 	// Set a block inside the chunk with the block index

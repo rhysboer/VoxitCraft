@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "Camera.h"
+#include "BaseCamera.h"
 #include "tiny_obj_loader.h"
 #include "ShaderManager.h"
 #include "Transform.h"
@@ -24,8 +24,8 @@ public:
 #pragma endregion
 
 	void Render(const glm::mat4& projectionView);
-	void Render(Camera& camera);
-	void RawRender(Camera& camera);
+	void Render(BaseCamera& camera);
+	void RawRender(BaseCamera& camera);
 
 	/* Setters */
 	void SetShader(Shader* shader);

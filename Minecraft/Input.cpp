@@ -41,6 +41,18 @@ bool Input::IsKeyPressed(const int key) {
 	return false;
 }
 
+void Input::DisableCursor(const bool& hideCursor) {
+	if(hideCursor == true) {
+		glfwSetInputMode(&Engine::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	} else {
+		glfwSetInputMode(&Engine::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+		glm::vec2 size = Engine::GetWindowSize() / 2;
+		glfwSetCursorPos(&Engine::GetWindow(), size.x, size.y);
+		mousePosition = size;
+	}
+}
+
 void Input::SetCallbacks(GLFWwindow* window) {
 	glfwSetKeyCallback(window, KeyCallback);
 	glfwSetMouseButtonCallback(window, MouseButtonCallback);
@@ -67,6 +79,11 @@ void Input::MousePositionCallback(GLFWwindow* window, double xpos, double ypos) 
 void Input::Update() {
 	for(int i = 0; i < GLFW_KEY_LAST; i++) 
 		keyPrevStates[i] = keyStates[i];
+
+	//if(isMouseLocked) {
+	//	glm::vec2 size = Engine::GetWindowSize() / 2;
+	//	glfwSetCursorPos(&Engine::GetWindow(), size.x, size.y);
+	//}
 
 	mouseDelta = glm::vec2(0.0);
 }

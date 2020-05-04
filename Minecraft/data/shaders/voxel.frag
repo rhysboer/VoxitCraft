@@ -27,5 +27,5 @@ void main()
 	if(texel.a < 0.5)
 		discard;
 
-	FragColor = vec4(texel.rgb * GetLight(_normals), texel.a); 
+	FragColor = vec4(texel.rgb * GetLight(_normals), texel.a);
 }

@@ -136,6 +136,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
+    <ClCompile Include="BaseCamera.cpp" />
     <ClCompile Include="Biome.cpp" />
     <ClCompile Include="BiomeDesert.cpp" />
     <ClCompile Include="BiomeField.cpp" />
@@ -146,11 +147,11 @@
     <ClCompile Include="ChunkManager.cpp" />
     <ClCompile Include="Constants.cpp" />
     <ClCompile Include="Cubemap.cpp" />
-    <ClCompile Include="ECPlayer.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Entity.cpp" />
-    <ClCompile Include="EntityController.cpp" />
     <ClCompile Include="EntityManager.cpp" />
+    <ClCompile Include="EntityPlayer.cpp" />
+    <ClCompile Include="FPSCamera.cpp" />
     <ClCompile Include="Framebuffer.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="imgui.cpp" />
@@ -163,6 +164,7 @@
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Object3D.cpp" />
+    <ClCompile Include="PostProcess.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="SkyBox.cpp" />
@@ -177,6 +179,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
+    <ClInclude Include="BaseCamera.h" />
     <ClInclude Include="Biome.h" />
     <ClInclude Include="BiomeDesert.h" />
     <ClInclude Include="BiomeField.h" />
@@ -187,11 +190,11 @@
     <ClInclude Include="ChunkManager.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Cubemap.h" />
-    <ClInclude Include="ECPlayer.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="Entity.h" />
-    <ClInclude Include="EntityController.h" />
     <ClInclude Include="EntityManager.h" />
+    <ClInclude Include="EntityPlayer.h" />
+    <ClInclude Include="FPSCamera.h" />
     <ClInclude Include="Framebuffer.h" />
     <ClInclude Include="imconfig.h" />
     <ClInclude Include="imgui.h" />
@@ -205,6 +208,7 @@
     <ClInclude Include="imstb_truetype.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Object3D.h" />
+    <ClInclude Include="PostProcess.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="SkyBox.h" />

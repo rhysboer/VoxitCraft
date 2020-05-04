@@ -3,7 +3,7 @@
 
 std::vector<Entity*> EntityManager::entities = std::vector<Entity*>();
 
-void EntityManager::Render(Camera& camera) {
+void EntityManager::Render(BaseCamera& camera) {
 	for(int i = 0; i < entities.size(); i++) {
 		entities[i]->OnRender(camera);
 	}

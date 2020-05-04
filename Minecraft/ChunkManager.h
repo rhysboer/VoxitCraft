@@ -7,7 +7,7 @@
 #include "glm/gtx/hash.hpp"
 #include "ShaderManager.h"
 #include "WorldGeneration.h"
-#include "Camera.h"
+#include "BaseCamera.h"
 #include "Chunk.h"
 
 #include "TileMap.h"
@@ -21,7 +21,8 @@ public:
 	~ChunkManager();
 
 	void Update();
-	void Render(Camera& camera);
+	void Render(BaseCamera& camera);
+	void DepthRender(BaseCamera& camera);
 
 
 	// Returns a block in the world, will return AIR if bad position. X, Y & Z are in World Position.
@@ -43,7 +44,6 @@ private:
 	// Multithreaded Funtions
 	void ChunkLoader();
 
-
 	Chunk* CreateChunk(const glm::ivec2& index);
 	
 	// Returns the chunk, otherwise returns nullptr;
@@ -54,7 +54,7 @@ private:
 	glm::ivec2 PositionToChunk(const glm::vec3& worldPosition) const;
 
 private:
-	const unsigned int RENDERING_DISTANCE = 2;
+	const unsigned int RENDERING_DISTANCE = 12;
 	
 	std::unordered_map<glm::ivec2, Chunk*> chunks = std::unordered_map <glm::ivec2, Chunk*>();
 	Chunk* cacheChunk = nullptr;
@@ -64,6 +64,7 @@ private:
 
 	Shader* solidShader;
 	Shader* waterShader;
+	Shader* depthShader;
 
 	glm::vec3 position = glm::vec3(0);
 

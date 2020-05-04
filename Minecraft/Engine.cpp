@@ -46,10 +46,10 @@ void Engine::Run() {
 	if(!isInitialized)
 		return;
 
-	glEnable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE); // Enable Culling of Faces
+	glCullFace(GL_BACK); // Cull Back Face
+	glEnable(GL_DEPTH_TEST); // Depth Testing
+	glEnable(GL_BLEND); // Transperent Blend
 	glDepthFunc(GL_LEQUAL);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

@@ -1,12 +1,13 @@
 #pragma once
-#include "Camera.h"
+#include "BaseCamera.h" //"Camera.h"
 #include "ChunkManager.h"
 #include "BlockManager.h"
 #include "EntityManager.h"
 #include "Entity.h"
 #include "SkyBox.h"
 
-#include "ECPlayer.h"
+#include "EntityPlayer.h"
+#include "FPSCamera.h"
 
 class World {
 public:
@@ -16,13 +17,15 @@ public:
 	~World();
 
 	void Update();
-	void Render(Camera& camera);
+	void Render();
 
 	static ChunkManager& GetChunkManager();
+	static EntityPlayer& GetPlayer();
 
 private:
 
 	static ChunkManager* chunkManager;
+	static EntityPlayer* player;
 
 	SkyBox* skybox;
 
