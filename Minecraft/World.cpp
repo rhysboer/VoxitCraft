@@ -26,15 +26,10 @@ void World::Update() {
 }
 
 void World::Render() {
-	//skybox->Render(camera);
-	//
-	//EntityManager::Render(camera);
-	//chunkManager->Render(camera);
-	
-
-
 	skybox->Render(*player->Camera());
+
 	EntityManager::Render(*player->Camera());
+
 	chunkManager->Render(*player->Camera());
 }
 

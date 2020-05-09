@@ -16,7 +16,6 @@ void Application::OnStart() {
 	app = this;
 
 	effect = PostProcessEffect::NORMAL;
-	camera = new Camera(glm::vec3(0, 0, 10));
 	world = new World();
 	lastResolution = Engine::GetWindowSize();
 
@@ -26,6 +25,10 @@ void Application::OnStart() {
 	postProcessing->GetShader().SetTextureUnit("screenDepth", 1);
 
 	framebuffer = new Framebuffer(glm::ivec2(1280, 720), FramebufferType::DEPTH);
+	blockBuffer = new Framebuffer(glm::ivec2(256, 256), FramebufferType::COLOUR);
+
+	camera = new Camera2D(glm::vec3(0, 0, 10), -2.0f, 2.0f, -2.0f, 2.0f, 0.0f, 100.0f);
+	cube = Object3D::CreateObject_Cube(glm::vec3(0, 0, 0));
 
 	Input::DisableCursor(true);
 }
@@ -64,7 +67,7 @@ void Application::OnRender() {
 	postProcessing->Begin();
 
 	world->Render();
-	Renderer::Render(*World::GetPlayer().Camera());
+	//Renderer::Render(*World::GetPlayer().Camera());
 
 
 
@@ -76,4 +79,16 @@ void Application::OnRender() {
 
 	// Render screen quad
 	postProcessing->Render();
+
+
+	glClearColor(0, 0, 0, 0);
+	blockBuffer->Render_Begin();
+	cube->GetTransform().RotateY(Time::DeltaTime() * 30.0f);
+	cube->Render(*camera);
+	blockBuffer->Render_End();
+	
+	
+	ImGui::Begin("Block Selection");
+	ImGui::Image((void*)blockBuffer->GetTexture(), ImVec2(128, 128), ImVec2(0, 1), ImVec2(1, 0));
+	ImGui::End();
 }

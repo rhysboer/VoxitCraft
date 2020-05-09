@@ -46,12 +46,6 @@
     <Filter Include="Header Files\Util">
       <UniqueIdentifier>{25a8f29d-485a-42b7-ad26-337cd3129078}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Engine\Renderers">
-      <UniqueIdentifier>{9a1261da-1b22-45c6-b6f6-f0299b2e299a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Renderers">
-      <UniqueIdentifier>{32f85a96-9d05-4695-8a52-e489da66ac5f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\World">
       <UniqueIdentifier>{64e62773-8c21-467a-ac65-96cc7a8a5056}</UniqueIdentifier>
     </Filter>
@@ -60,6 +54,12 @@
     </Filter>
     <Filter Include="Source Files\Util">
       <UniqueIdentifier>{728254c6-fa60-49b2-9ac5-081ac1642abb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Engine\Camera">
+      <UniqueIdentifier>{647e03fb-1fe3-472b-9363-d219d1cfacb2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Camera">
+      <UniqueIdentifier>{deaf513c-d9a2-4de4-b9fe-a09cf165276a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -171,9 +171,6 @@
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="BaseCamera.cpp">
-      <Filter>Source Files\Engine</Filter>
-    </ClCompile>
     <ClCompile Include="FPSCamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -191,6 +188,15 @@
     </ClCompile>
     <ClCompile Include="DELETTHIS.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseCamera.cpp">
+      <Filter>Source Files\Engine\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera3D.cpp">
+      <Filter>Source Files\Engine\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera2D.cpp">
+      <Filter>Source Files\Engine\Camera</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -311,9 +317,6 @@
     <ClInclude Include="EntityPlayer.h">
       <Filter>Header Files\Entity</Filter>
     </ClInclude>
-    <ClInclude Include="BaseCamera.h">
-      <Filter>Header Files\Engine</Filter>
-    </ClInclude>
     <ClInclude Include="FPSCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -334,6 +337,15 @@
     </ClInclude>
     <ClInclude Include="DELETTHIS.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseCamera.h">
+      <Filter>Header Files\Engine\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera3D.h">
+      <Filter>Header Files\Engine\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera2D.h">
+      <Filter>Header Files\Engine\Camera</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

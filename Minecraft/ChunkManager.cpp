@@ -294,10 +294,12 @@ void ChunkManager::SetBlock(const float& x, const float& y, const float& z, cons
 }
 
 Chunk* ChunkManager::FindChunk(const glm::ivec2& index) const {
-	if(cacheChunk != nullptr && cacheChunk->localCoord == index)
+	glm::ivec2 key = index;
+
+	if(cacheChunk != nullptr && cacheChunk->localCoord == key)
 		return cacheChunk;
 
-	auto iter = chunks.find(index);
+	auto iter = chunks.find(key);
 	return (iter != chunks.end()) ? iter->second : nullptr;
 }
 

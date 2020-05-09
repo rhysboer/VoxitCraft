@@ -137,12 +137,14 @@
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="BaseCamera.cpp" />
+    <ClCompile Include="Camera2D.cpp" />
     <ClCompile Include="Biome.cpp" />
     <ClCompile Include="BiomeDesert.cpp" />
     <ClCompile Include="BiomeField.cpp" />
     <ClCompile Include="BiomeSnow.cpp" />
     <ClCompile Include="BlockManager.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Camera3D.cpp" />
     <ClCompile Include="Chunk.cpp" />
     <ClCompile Include="ChunkManager.cpp" />
     <ClCompile Include="Cubemap.cpp" />
@@ -182,12 +184,14 @@
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="BaseCamera.h" />
+    <ClInclude Include="Camera2D.h" />
     <ClInclude Include="Biome.h" />
     <ClInclude Include="BiomeDesert.h" />
     <ClInclude Include="BiomeField.h" />
     <ClInclude Include="BiomeSnow.h" />
     <ClInclude Include="BlockManager.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Camera3D.h" />
     <ClInclude Include="Chunk.h" />
     <ClInclude Include="ChunkManager.h" />
     <ClInclude Include="Cubemap.h" />

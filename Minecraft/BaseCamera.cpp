@@ -1,11 +1,9 @@
 #include "BaseCamera.h"
 #include "Engine.h"
 
-BaseCamera::BaseCamera(const glm::vec3& _position, const glm::vec3& _worldUp, const float& _near, const float& _far) 
-	: view(0), projection(0), position(_position), forward(0), up(0), right(0), worldUp(_worldUp), yaw(-90.0f), pitch(0), fov(glm::radians(40.0f)), near(_near), far(_far), isDirty(true)
-{
-	UpdateCamera();
-}
+BaseCamera::BaseCamera(const glm::vec3& _position, const glm::vec3& _worldUp, const float& _fov, const float& _near, const float& _far)
+	: view(0), projection(0), position(_position), forward(0), up(0), right(0), worldUp(_worldUp), yaw(-90.0f), pitch(0), fov(glm::radians(_fov)), near(_near), far(_far), isDirty(true)
+{ }
 
 void BaseCamera::UpdateCamera() {
 	glm::vec3 temp = glm::vec3(0.0f);
@@ -19,9 +17,8 @@ void BaseCamera::UpdateCamera() {
 
 	view = glm::lookAt(position, position + forward, up);
 
-	glm::vec2 size = Engine::GetWindowSize();
-	projection = glm::perspective(fov, (size.y == 0) ? 0.0f : size.x / size.y, near, far);
-
+	//glm::vec2 size = Engine::GetWindowSize();
+	projection = CreateProjectionMatrix(); //glm::perspective(fov, (size.y == 0) ? 0.0f : size.x / size.y, near, far);
 
 	isDirty = false;
 }
@@ -67,6 +64,7 @@ glm::mat4 BaseCamera::Projection() {
 
 glm::mat4 BaseCamera::ProjectionView() {
 	DIRTY_CHECK;
+	
 	return projection * view;
 }
 

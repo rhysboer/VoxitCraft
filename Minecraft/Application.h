@@ -2,10 +2,10 @@
 #include "Engine.h"
 #include "World.h"
 #include "PostProcess.h"
-
-#include "Camera.h"
+#include "Camera2D.h"
 
 #include "Renderer.h"
+#include "Object3D.h"
 
 enum class PostProcessEffect {
 	NORMAL,
@@ -34,8 +34,12 @@ private:
 	PostProcessEffect effect;
 	PostProcess* postProcessing;
 	Framebuffer* framebuffer;
+	
+	// Test
+	Framebuffer* blockBuffer;
+	BaseCamera* camera;
+	Object3D* cube;
 
-	Camera* camera;
 	World* world;
 
 	glm::vec2 lastResolution;

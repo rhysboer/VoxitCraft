@@ -1,18 +1,18 @@
 #pragma once
-#include "BaseCamera.h"
+#include "Camera3D.h"
 #include "Input.h"
 
 class Entity;
 
-class FPSCamera : public BaseCamera {
+class FPSCamera : public Camera3D {
 public:
 
 	FPSCamera(Entity& entity, const glm::vec3& position);
-	virtual ~FPSCamera() override;
+	~FPSCamera();
 	
 	void Update();
 
-private:
+protected:
 
 	Entity* entity;
 };

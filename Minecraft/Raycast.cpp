@@ -84,7 +84,7 @@ Ray::RayHit Ray::RaycastFromCamera(const float& distance, BaseCamera& camera) {
 		BlockIDs block = World::GetChunkManager().GetBlock(pos);
 		
 		if(pos.y < 0)
-			break; //return Ray::RayHit(BlockIDs::AIR, glm::vec3(0), BlockIDs::AIR, glm::vec3(0), false);
+			break;
 
 		if(block == BlockIDs::AIR || block == BlockIDs::WATER) {
 			++counter;

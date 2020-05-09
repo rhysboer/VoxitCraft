@@ -1,5 +1,5 @@
 #pragma once
-#include "BaseCamera.h" //"Camera.h"
+#include "Camera3D.h"
 #include "ChunkManager.h"
 #include "BlockManager.h"
 #include "EntityManager.h"
@@ -18,6 +18,10 @@ public:
 
 	void Update();
 	void Render();
+
+	void TestFunc(BaseCamera& camera) {
+		
+	};
 
 	static ChunkManager& GetChunkManager();
 	static EntityPlayer& GetPlayer();
