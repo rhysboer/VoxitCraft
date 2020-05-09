@@ -1,9 +1,9 @@
 #include "PostProcess.h"
 
-PostProcess::PostProcess(const char* shaderPath, const float& sizeX, const float& sizeY, const FramebufferType& type) {
+PostProcess::PostProcess(const char* shaderName, const float& sizeX, const float& sizeY, const FramebufferType& type) {
 	framebuffer = new Framebuffer(glm::vec2(sizeX, sizeY), type);
 
-	shader = ShaderManager::AddShader("postProcess");
+	shader = ShaderManager::AddShader(shaderName);
 
 	const float verticies[] = {
 		-1.0f,  1.0f,  0.0f, 1.0f,

@@ -1,9 +1,11 @@
 #include "Input.h"
 #include "Engine.h"
 
-unsigned int Input::keyStates[GLFW_KEY_LAST] = { 0 };
-unsigned int Input::keyPrevStates[GLFW_KEY_LAST] = { 0 };
-unsigned int Input::mouseButtonStates[GLFW_MOUSE_BUTTON_LAST] = { 0 };
+unsigned int Input::keyStates[GLFW_KEY_LAST];
+unsigned int Input::keyPrevStates[GLFW_KEY_LAST];
+unsigned int Input::mouseButtonStates[GLFW_MOUSE_BUTTON_LAST];
+unsigned int Input::mouseButtonPrevStates[GLFW_MOUSE_BUTTON_LAST];
+
 glm::vec2 Input::mousePosition = glm::vec2(0.0f);
 glm::vec2 Input::mouseLastPosition = glm::vec2(0.0f);
 glm::vec2 Input::mouseDelta = glm::vec2(0.0f);
@@ -20,21 +22,28 @@ glm::vec2 Input::MouseDeltaPosition() {
 	return mouseDelta;
 }
 
-bool Input::IsMouseKeyDown(const int button) {
+bool Input::IsMouseKeyDown(const int& button) {
 	if(button < 0 || button > GLFW_MOUSE_BUTTON_LAST) return false;
 	if(mouseButtonStates[button] == GLFW_PRESS || mouseButtonStates[button] == GLFW_REPEAT)
 		return true;
 	return false;
 }
 
-bool Input::IsKeyDown(const int key) {
+bool Input::IsMouseKeyPressed(const int& button) {
+	if(button < 0 || button > GLFW_MOUSE_BUTTON_LAST) return false;
+	if(mouseButtonStates[button] == GLFW_PRESS && mouseButtonPrevStates[button] == GLFW_RELEASE)
+		return true;
+	return false;
+}
+
+bool Input::IsKeyDown(const int& key) {
 	if(key < 0 || key > GLFW_KEY_LAST) return false;
 	if(keyStates[key] == GLFW_PRESS || keyStates[key] == GLFW_REPEAT)
 		return true;
 	return false;
 }
 
-bool Input::IsKeyPressed(const int key) {
+bool Input::IsKeyPressed(const int& key) {
 	if(key < 0 || key > GLFW_KEY_LAST) return false;
 	if(keyStates[key] == GLFW_PRESS && keyPrevStates[key] == GLFW_RELEASE)
 		return true;
@@ -47,6 +56,7 @@ void Input::DisableCursor(const bool& hideCursor) {
 	} else {
 		glfwSetInputMode(&Engine::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
+		// Center mouse after reactivating
 		glm::vec2 size = Engine::GetWindowSize() / 2;
 		glfwSetCursorPos(&Engine::GetWindow(), size.x, size.y);
 		mousePosition = size;
@@ -77,13 +87,13 @@ void Input::MousePositionCallback(GLFWwindow* window, double xpos, double ypos) 
 }
 
 void Input::Update() {
+	// Update keyboard states
 	for(int i = 0; i < GLFW_KEY_LAST; i++) 
 		keyPrevStates[i] = keyStates[i];
 
-	//if(isMouseLocked) {
-	//	glm::vec2 size = Engine::GetWindowSize() / 2;
-	//	glfwSetCursorPos(&Engine::GetWindow(), size.x, size.y);
-	//}
+	// Update mouse states
+	for(int i = 0; i < GLFW_MOUSE_BUTTON_LAST; i++)
+		mouseButtonPrevStates[i] = mouseButtonStates[i];
 
 	mouseDelta = glm::vec2(0.0);
 }

@@ -6,8 +6,6 @@ Chunk::Chunk(glm::ivec2 index, ChunkManager& world) :localCoord(index), hasWorld
 	worldCoord = glm::vec3(index.x * CHUNK_SIZE, 0.0f, index.y * CHUNK_SIZE);
 	
 	solidMesh.meshData.reserve(4500);
-
-	//std::fill_n(slices, CHUNK_HEIGHT, Chunk::CHUNK_SLICE);e
 }
 
 Chunk::~Chunk() {
@@ -39,6 +37,7 @@ void Chunk::RenderOpaque(Shader& waterShader) {
 
 //							[ SET BLOCKS ]
 
+// X, Y & Z are World Position
 void Chunk::SetBlock(const int& x, const int& y, const int& z, const BlockIDs& block) {
 	if(y < 0 && y > CHUNK_HEIGHT)
 		return;
@@ -86,8 +85,21 @@ void Chunk::SetBlock(const unsigned int& index, const BlockIDs& id) {
 
 	highestBlock = glm::max(highestBlock, (int)glm::floor(index / CHUNK_SLICE));
 
+
+	// IF block is on the side of the chunk, dirty neighbour
+	glm::vec3 pos = IndexToLocalPos(index);
+	if(pos.x == 0)
+		SetNeighbourDirty(NEIGHBOUR::LEFT);
+	if(pos.x == CHUNK_SIZE - 1)
+		SetNeighbourDirty(NEIGHBOUR::RIGHT);
+	if(pos.z == 0)
+		SetNeighbourDirty(NEIGHBOUR::FRONT);
+	if(pos.z == CHUNK_SIZE - 1)
+		SetNeighbourDirty(NEIGHBOUR::BACK);
+
 	// Set Block
 	blocks[index] = id;
+	this->isDirty = true;
 }
 
 //							[ GET BLOCKS ]
@@ -192,6 +204,16 @@ BlockIDs Chunk::GetChunkOrNeighbourBlock(const float& x, const float& y, const f
 	//	return chunkManager->GetBlock(glm::vec3(x, y, z) + worldCoord);
 	//return blocks[ToBlockIndex(glm::vec3(x, y, z))];
 }
+
+void Chunk::SetNeighbourDirty(NEIGHBOUR neighbour) {
+	int index = (int)neighbour;
+
+	if(neighbourChunks[index] == nullptr)
+		neighbourChunks[index] = chunkManager->FindChunk(localCoord + neighbourOffsets[index]);
+
+	if(neighbourChunks[index] != nullptr)
+		neighbourChunks[index]->SetDirty();
+}
 					
 #pragma endregion
 
@@ -220,49 +242,14 @@ unsigned int Chunk::ToBlockIndex(const glm::vec3& localPosition) const {
 	return ToBlockIndex(localPosition.x, localPosition.y, localPosition.z);
 }
 
+glm::vec3 Chunk::IndexToLocalPos(const unsigned int& index) const {
+	float x = index % CHUNK_SIZE;
+	float y = glm::floor(index / CHUNK_SLICE);
+	float z = (int)glm::floor(index / CHUNK_SIZE) % CHUNK_SIZE;
+	return glm::vec3(x, y, z);
+}
+
 bool Chunk::NeighbourSlices(const unsigned int& y) {
-	// BACK UP
-	/*
-	if(y != CHUNK_HEIGHT) {
-		if(slices[y] == 0) {
-			if(slices[y + 1] > 0)
-				return false;
-		}
-		else if(slices[y] == CHUNK_SLICE) {
-			if(slices[y + 1] < CHUNK_SLICE)
-				return false;
-
-		}
-	}
-	
-	if(y != 0) {
-		if(slices[y] == 0) {
-			if(slices[y - 1] > 0)
-				return false;
-		} else if(slices[y] == CHUNK_SLICE) {
-			if(slices[y - 1] < CHUNK_SLICE)
-				return false;
-
-		}
-	}
-
-	for(int i = 0; i < 4; i++) {
-		if(neighbourChunks[i] == nullptr)
-			neighbourChunks[i] = chunkManager->FindChunk(localCoord + neighbourOffsets[i]);
-	
-		if(neighbourChunks[i] != nullptr) {
-	
-			if(slices[y] == 0) {
-				if(neighbourChunks[i]->slices[y] > 0)
-					return false;
-			} else if(slices[y] == CHUNK_SLICE) {
-				if(neighbourChunks[i]->slices[y] < CHUNK_SLICE)
-					return false;
-			}
-		}
-	}
-	*/
-
 	/*
 		Solid blocks only need to check if there is solid slices around their slice, and render regardless if there is transparency slices
 
@@ -283,10 +270,16 @@ bool Chunk::NeighbourSlices(const unsigned int& y) {
 	for(int i = 0; i < 4; i++) {
 		if(neighbourChunks[i] == nullptr)
 			neighbourChunks[i] = chunkManager->FindChunk(localCoord + neighbourOffsets[i]);
-
-		if(neighbourChunks[i] != nullptr) {
-			if(neighbourChunks[i]->chunkSlice.solidBlocks[y] < CHUNK_SLICE || chunkSlice.transparentBlocks[y] > 0 && chunkSlice.transparentBlocks[y + 1] < 256)
+	
+		Chunk* chunk = neighbourChunks[i];
+		if(chunk != nullptr) {
+			if(!chunk->hasWorldData)
+				continue;
+			//if(chunkSlice.transparentBlocks[y] > 0 && chunkSlice.transparentBlocks[y + 1] < 256)
+			//	return false;
+			if(chunk->chunkSlice.solidBlocks[y] < CHUNK_SLICE) //chunk->chunkSlice.solidBlocks[y] < CHUNK_SLICE)
 				return false;
+
 		}
 	}
 
@@ -299,8 +292,12 @@ bool Chunk::NeighbourSlices(const unsigned int& y) {
 void Chunk::SetWorldData(const std::array<BlockIDs, CHUNK_MASS>& data, int height) {
 
 	int max = height * CHUNK_SLICE;
-	for(int i = 0; i < max; i++)
+	for(int i = 0; i < max; i++) {
+		if(data[i] == BlockIDs::AIR)
+			continue;
+
 		SetBlock(i, data[i]);
+	}
 
 	hasWorldData = true;
 	isDirty = true;
@@ -331,7 +328,7 @@ void Chunk::GenerateMeshData() {
 	};
 
 	// Timer
-	//std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+	std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 
 	for(int y = 0; y < highestBlock + 1; y++) {
 		if(NeighbourSlices(y))
@@ -561,17 +558,22 @@ void Chunk::GenerateMeshData() {
 
 	}
 
-	//std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-	//std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+	DELETTHIS::AddTime2(time_span.count());
 	//printf("Generation Duration: %f seconds\n", time_span.count());
+
+
 	solidMesh.indicesCount = solidMesh.indices.size();
 	waterMesh.indicesCount = waterMesh.indices.size();
 
-	meshUpdate = true;
+	uploadMeshToGPU = true;
 	isDirty = false;
 }
 
 void Chunk::CreateMesh() {
+
+	std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 
 	// Generate Solid Buffers
 	if(solidMesh.meshData.size() > 0) {
@@ -584,10 +586,10 @@ void Chunk::CreateMesh() {
 		glBindVertexArray(solidMesh.vao);
 
 		glBindBuffer(GL_ARRAY_BUFFER, solidMesh.vbo);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * solidMesh.meshData.size(), solidMesh.meshData.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * solidMesh.meshData.size(), solidMesh.meshData.data(), GL_DYNAMIC_DRAW);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, solidMesh.ebo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * solidMesh.indices.size(), solidMesh.indices.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * solidMesh.indices.size(), solidMesh.indices.data(), GL_DYNAMIC_DRAW);
 
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(0 * sizeof(float))); // Vertices
@@ -610,10 +612,10 @@ void Chunk::CreateMesh() {
 		glBindVertexArray(waterMesh.vao);
 
 		glBindBuffer(GL_ARRAY_BUFFER, waterMesh.vbo);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * waterMesh.meshData.size(), waterMesh.meshData.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * waterMesh.meshData.size(), waterMesh.meshData.data(), GL_DYNAMIC_DRAW);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, waterMesh.ebo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * waterMesh.indices.size(), waterMesh.indices.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * waterMesh.indices.size(), waterMesh.indices.data(), GL_DYNAMIC_DRAW);
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(0 * sizeof(float))); // Vertices
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))); // Normals
@@ -626,9 +628,15 @@ void Chunk::CreateMesh() {
 
 	glBindVertexArray(0);
 
-	solidMesh.meshData.clear();
-	solidMesh.indices.clear();
-	meshUpdate = false;
+	solidMesh.Clear();
+	waterMesh.Clear();
+	uploadMeshToGPU = false;
+
+	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+	//printf("Generation Duration: %f seconds\n", time_span.count());
+
+	DELETTHIS::AddTime(time_span.count());
 }
 
 #pragma endregion

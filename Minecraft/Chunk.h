@@ -24,11 +24,21 @@ struct MeshData {
 	unsigned int ebo;
 
 	unsigned int indicesCount;
+
+	void Clear() {
+		meshData.clear();
+		indices.clear();
+	}
 };
 
 class ChunkManager;
 
 class Chunk {
+private:
+	enum class NEIGHBOUR {
+		LEFT, RIGHT, FRONT, BACK
+	};
+
 public:
 	// Chunk statics 
 	static const int CHUNK_SIZE = 16;
@@ -75,9 +85,15 @@ private:
 	// Returns the index of a block in the array from local position.
 	unsigned int ToBlockIndex(const float& x, const float& y, const float& z) const;
 	unsigned int ToBlockIndex(const glm::vec3& localPosition) const;
+	glm::vec3 IndexToLocalPos(const unsigned int& index) const;
 
 	// Returns the block at location inside the chunk or its neighbour, ONLY USED FOR CHUNK MESH GENERATION
 	BlockIDs GetChunkOrNeighbourBlock(const float& x, const float& y, const float& z);
+
+	// Set neighbouring chunk dirty
+	void SetNeighbourDirty(NEIGHBOUR neighbour);
+
+	void SetDirty() { isDirty = true; }
 
 	// 
 	bool NeighbourSlices(const unsigned int& y);
@@ -96,13 +112,10 @@ public: // Private
 	glm::vec3 worldCoord; // World Coordinates of the chunk
 	ChunkManager* chunkManager; // Pointer to world
 	int highestBlock; // Highest block inside the chunk
-	bool isDirty; // Is chunk dirty 
-	bool meshUpdate; // Does the chunk need to update its mesh
+	bool isDirty; // Is chunk dirty, needs to regenerate mesh data
+	bool uploadMeshToGPU; // Does chunk need to upload its data to the gpu
 	bool hasWorldData; // Has generated world data
 
-	enum class NEIGHBOUR {
-		LEFT, RIGHT, FRONT, BACK
-	};
 	const glm::ivec2 neighbourOffsets[4] = { glm::ivec2(-1, 0), glm::ivec2(1, 0), glm::ivec2(0, -1), glm::ivec2(0, 1) };
 	Chunk* neighbourChunks[4] = { nullptr, nullptr, nullptr, nullptr };
 

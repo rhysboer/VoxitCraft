@@ -18,8 +18,10 @@ void Application::OnStart() {
 	effect = PostProcessEffect::NORMAL;
 	camera = new Camera(glm::vec3(0, 0, 10));
 	world = new World();
+	lastResolution = Engine::GetWindowSize();
 
-	postProcessing = new PostProcess("", 1280, 720, FramebufferType::COLOUR_AND_DEPTH);
+
+	postProcessing = new PostProcess("postProcess", 1280, 720, FramebufferType::COLOUR_AND_DEPTH);
 	postProcessing->GetShader().SetTextureUnit("screenColour", 0);
 	postProcessing->GetShader().SetTextureUnit("screenDepth", 1);
 
@@ -35,21 +37,24 @@ void Application::OnEnd() {
 }
 
 void Application::OnUpdate() {
-	//camera->InputHandler();
+	// DEBUG
+	//if(Input::IsKeyPressed(GLFW_KEY_1)) {
+	//	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE + isWireFrame);
+	//	isWireFrame = !isWireFrame;
+	//}
 
 	// DEBUG
-	if(Input::IsKeyPressed(GLFW_KEY_1)) {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE + isWireFrame);
-		isWireFrame = !isWireFrame;
-	}
-
-	// DEBUG
-	if(Input::IsKeyPressed(GLFW_KEY_2)) {
+	if(Input::IsKeyPressed(GLFW_KEY_2) || Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
 		lockCursor = !lockCursor;
 		Input::DisableCursor(lockCursor);
 	}
-	
-	
+
+	// Update framebuffer resolution
+	glm::vec2 resolution = Engine::GetWindowSize();
+	if(lastResolution != resolution) {
+		lastResolution = resolution;
+		postProcessing->GetBuffer().SetSize(resolution);
+	}
 	
 	world->Update();
 }
@@ -59,6 +64,9 @@ void Application::OnRender() {
 	postProcessing->Begin();
 
 	world->Render();
+	Renderer::Render(*World::GetPlayer().Camera());
+
+
 
 	postProcessing->End();
 	

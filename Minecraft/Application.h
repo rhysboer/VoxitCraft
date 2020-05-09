@@ -5,6 +5,8 @@
 
 #include "Camera.h"
 
+#include "Renderer.h"
+
 enum class PostProcessEffect {
 	NORMAL,
 	UNDER_WATER
@@ -36,7 +38,7 @@ private:
 	Camera* camera;
 	World* world;
 
-
+	glm::vec2 lastResolution;
 	bool lockCursor = true;
 	bool isWireFrame = false;
 };

@@ -25,9 +25,6 @@
     <Filter Include="Source Files\Engine\Imgui">
       <UniqueIdentifier>{59d7d9aa-be28-4e34-bf67-47f3450e921e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\World">
-      <UniqueIdentifier>{64e62773-8c21-467a-ac65-96cc7a8a5056}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\World">
       <UniqueIdentifier>{98384ee5-50ac-422b-bec2-e2d0152cf486}</UniqueIdentifier>
     </Filter>
@@ -40,14 +37,29 @@
     <Filter Include="Header Files\World\Biome">
       <UniqueIdentifier>{dd5f315a-cf15-4a41-90ca-4b61fcbe12b9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\World\Biome">
-      <UniqueIdentifier>{6f9e7471-01bb-4e8b-92e1-4853497aa0de}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Entity">
       <UniqueIdentifier>{3e589855-6b84-4ab2-b6f7-f7ab067a07c8}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Entity">
       <UniqueIdentifier>{380943e4-2efb-46a9-97ae-f638ae5226ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Util">
+      <UniqueIdentifier>{25a8f29d-485a-42b7-ad26-337cd3129078}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Engine\Renderers">
+      <UniqueIdentifier>{9a1261da-1b22-45c6-b6f6-f0299b2e299a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Renderers">
+      <UniqueIdentifier>{32f85a96-9d05-4695-8a52-e489da66ac5f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\World">
+      <UniqueIdentifier>{64e62773-8c21-467a-ac65-96cc7a8a5056}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\World\Biome">
+      <UniqueIdentifier>{6f9e7471-01bb-4e8b-92e1-4853497aa0de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Util">
+      <UniqueIdentifier>{728254c6-fa60-49b2-9ac5-081ac1642abb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -123,9 +135,6 @@
     <ClCompile Include="BlockManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TileMap.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Sprite.cpp">
       <Filter>Source Files\Engine\Texture</Filter>
     </ClCompile>
@@ -137,9 +146,6 @@
     </ClCompile>
     <ClCompile Include="SkyBox.cpp">
       <Filter>Source Files\Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Constants.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Biome.cpp">
       <Filter>Source Files\World\Biome</Filter>
@@ -173,6 +179,18 @@
     </ClCompile>
     <ClCompile Include="PostProcess.cpp">
       <Filter>Source Files\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Raycast.cpp">
+      <Filter>Source Files\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="TileMap.cpp">
+      <Filter>Source Files\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DELETTHIS.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -260,9 +278,6 @@
     <ClInclude Include="BlockManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TileMap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Sprite.h">
       <Filter>Header Files\Engine\Texture</Filter>
     </ClInclude>
@@ -275,9 +290,6 @@
     <ClInclude Include="SkyBox.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Biome.h">
       <Filter>Header Files\World\Biome</Filter>
     </ClInclude>
@@ -286,9 +298,6 @@
     </ClInclude>
     <ClInclude Include="BiomeDesert.h">
       <Filter>Header Files\World\Biome</Filter>
-    </ClInclude>
-    <ClInclude Include="Util.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BiomeSnow.h">
       <Filter>Header Files\World\Biome</Filter>
@@ -310,6 +319,21 @@
     </ClInclude>
     <ClInclude Include="PostProcess.h">
       <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Util.h">
+      <Filter>Header Files\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="TileMap.h">
+      <Filter>Header Files\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Raycast.h">
+      <Filter>Header Files\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="DELETTHIS.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -16,6 +16,7 @@ public:
 
 	void SetNear(const float& distance);
 	void SetFar(const float& distance);
+	void SetFOV(const float& fov);
 	void SetDirty();
 
 	glm::mat4 View();

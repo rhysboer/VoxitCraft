@@ -14,9 +14,10 @@ public:
 	static glm::vec2 MousePosition();
 	static glm::vec2 MouseDeltaPosition();
 
-	static bool IsMouseKeyDown(const int button);
-	static bool IsKeyDown(const int key);			// Key held down
-	static bool IsKeyPressed(const int key);		// Key pressed
+	static bool IsMouseKeyDown(const int& button);
+	static bool IsMouseKeyPressed(const int& button);
+	static bool IsKeyDown(const int& key);			// Key held down
+	static bool IsKeyPressed(const int& key);		// Key pressed
 
 	static void DisableCursor(const bool& disable);
 
@@ -33,6 +34,8 @@ private:
 	static unsigned int keyStates[GLFW_KEY_LAST];
 	static unsigned int keyPrevStates[GLFW_KEY_LAST];
 	static unsigned int mouseButtonStates[GLFW_MOUSE_BUTTON_LAST];
+	static unsigned int mouseButtonPrevStates[GLFW_MOUSE_BUTTON_LAST];
+
 	static glm::vec2 mousePosition;
 	static glm::vec2 mouseLastPosition;
 	static glm::vec2 mouseDelta;

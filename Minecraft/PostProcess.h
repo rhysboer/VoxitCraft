@@ -5,7 +5,7 @@
 class PostProcess {
 public:
 
-	PostProcess(const char* shaderPath, const float& sizeX, const float& sizeY, const FramebufferType& type);
+	PostProcess(const char* shaderName, const float& sizeX, const float& sizeY, const FramebufferType& type);
 	~PostProcess();
 
 	Shader& GetShader() const;

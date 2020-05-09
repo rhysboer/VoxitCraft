@@ -45,6 +45,12 @@ void BaseCamera::SetFar(const float& distance) {
 	UpdateCamera();
 }
 
+void BaseCamera::SetFOV(const float& fov) {
+	this->fov = glm::radians(fov);
+
+	UpdateCamera();
+}
+
 void BaseCamera::SetDirty() {
 	isDirty = true;
 }

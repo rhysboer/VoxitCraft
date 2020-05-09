@@ -18,7 +18,7 @@ void main()
 	model[3] = vec4(position, 1);
 
 	vec3 topVertex = vertex;
-	if(topVertex.y >= 1.0)
+	if(topVertex.y >= 0.2)
 		topVertex.y *= 0.995;
 
 	gl_Position = projectionView * model * vec4(topVertex, 1);

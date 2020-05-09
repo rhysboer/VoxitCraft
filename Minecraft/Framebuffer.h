@@ -18,6 +18,8 @@ public:
 	void Render_Begin();
 	void Render_End();
 
+	void SetSize(const glm::vec2& size);
+
 	// If texture equals COLOUR_AND_DEPTH, colour will be bound to INDEX and depth will be bount to INDEX + 1
 	void BindTextures(const unsigned int& index) const;
 	void BindTextureColour(const unsigned int& index) const;
@@ -26,8 +28,11 @@ public:
 	unsigned int GetTexture() const;
 
 private:
+
+	void CreateFramebuffer();
+
 	glm::vec2 framebufferSize;
-	glm::vec2 screenSize;
+	glm::vec2 viewportSize; // Viewport size before resizing
 
 	FramebufferType type;
 

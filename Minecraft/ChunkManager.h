@@ -14,6 +14,8 @@
 
 #include "Engine.h"
 
+#include "DELETTHIS.h"
+
 class ChunkManager {
 public:
 	
@@ -22,8 +24,6 @@ public:
 
 	void Update();
 	void Render(BaseCamera& camera);
-	void DepthRender(BaseCamera& camera);
-
 
 	// Returns a block in the world, will return AIR if bad position. X, Y & Z are in World Position.
 	BlockIDs GetBlock(const float& x, const float& y, const float& z) const;
@@ -32,12 +32,14 @@ public:
 	// Returns blocks inside area that are solid
 	void GetSolidBlocksInArea(const glm::vec3& worldPosition, const glm::vec3& size, std::vector<glm::vec3>& output);
 
+	// World Position
 	void SetBlock(const float& x, const float& y, const float& z, const BlockIDs& block);
 	void SetBlock(const glm::vec3& worldPosition, const BlockIDs& block);
+	void SetBlocks(const std::vector<glm::vec3>& positions, std::vector<BlockIDs>& blocks);
 
 	friend Chunk;
 
-private:
+public: // Private
 
 	WorldGeneration worldGen = WorldGeneration();
 
@@ -54,7 +56,7 @@ private:
 	glm::ivec2 PositionToChunk(const glm::vec3& worldPosition) const;
 
 private:
-	const unsigned int RENDERING_DISTANCE = 12;
+	const unsigned int RENDERING_DISTANCE = 6;
 	
 	std::unordered_map<glm::ivec2, Chunk*> chunks = std::unordered_map <glm::ivec2, Chunk*>();
 	Chunk* cacheChunk = nullptr;
@@ -64,7 +66,6 @@ private:
 
 	Shader* solidShader;
 	Shader* waterShader;
-	Shader* depthShader;
 
 	glm::vec3 position = glm::vec3(0);
 
