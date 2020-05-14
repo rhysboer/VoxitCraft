@@ -92,6 +92,18 @@ void Shader::SetFloat(const char* name, float value) {
 	glUniform1f(loc, value);
 }
 
+void Shader::SetFloatArray(const char* name, const unsigned int& size, const float& value) {
+	UseProgram();
+
+	unsigned int loc = glGetUniformLocation(shaderProgram, name);
+	if(loc == -1) {
+		printf("Error finding float Uniform: %s\n", name);
+		return;
+	}
+
+	glUniform1fv(loc, size, &value);
+}
+
 void Shader::SetInt(const char* name, int value) {
 	UseProgram();
 
@@ -114,6 +126,30 @@ void Shader::SetMatrix4(const char* name, const glm::mat4& value) {
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(value));
 }
 
+void Shader::SetVector2(const char* name, const glm::vec2& value) {
+	UseProgram();
+
+	unsigned int loc = glGetUniformLocation(shaderProgram, name);
+	if(loc == -1) {
+		printf("Error finding Vec4 Uniform: %s\n", name);
+		return;
+	}
+
+	glUniform2f(loc, value.r, value.g);
+}
+
+void Shader::SetVector2Array(const char* name, const unsigned int& size, const glm::vec2& value) {
+	UseProgram();
+
+	unsigned int loc = glGetUniformLocation(shaderProgram, name);
+	if(loc == -1) {
+		printf("Error finding Vec3 Uniform: %s\n", name);
+		return;
+	}
+
+	glUniform2fv(loc, size, &value[0]);
+}
+
 void Shader::SetVector4(const char* name, const glm::vec4& value) {
 	UseProgram();
 
@@ -122,6 +158,7 @@ void Shader::SetVector4(const char* name, const glm::vec4& value) {
 		printf("Error finding Vec4 Uniform: %s\n", name);
 		return;
 	}
+
 	glUniform4f(loc, value.r, value.g, value.b, value.a);
 }
 

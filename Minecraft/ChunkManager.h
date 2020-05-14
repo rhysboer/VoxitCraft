@@ -37,6 +37,9 @@ public:
 	void SetBlock(const glm::vec3& worldPosition, const BlockIDs& block);
 	void SetBlocks(const std::vector<glm::vec3>& positions, std::vector<BlockIDs>& blocks);
 
+	TileMap& GetTileMapTerrain() const;
+	TileMap& GetTileMapWater() const;
+
 	friend Chunk;
 
 public: // Private

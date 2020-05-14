@@ -36,7 +36,16 @@ class ChunkManager;
 class Chunk {
 private:
 	enum class NEIGHBOUR {
-		LEFT, RIGHT, FRONT, BACK
+		LEFT = 0, // X-
+		RIGHT = 1, // X+
+		FRONT = 2, // Z+
+		BACK = 3, // Z-
+		FRONT_LEFT = 4, // X-, Z+
+		FRONT_RIGHT = 5, // X+, Z+
+		BACK_LEFT = 6, // X-, Z-
+		BACK_RIGHT = 7, // X+, Z-
+
+		_TOTAL = 8
 	};
 
 public:
@@ -63,7 +72,7 @@ public:
 	friend class ChunkManager;
 	friend class WorldGeneration;
 
-private:
+public: // private
 
 	// TEST
 	void SetWorldData(const std::array<BlockIDs, CHUNK_MASS>& data, int height);
@@ -89,9 +98,13 @@ private:
 
 	// Returns the block at location inside the chunk or its neighbour, ONLY USED FOR CHUNK MESH GENERATION
 	BlockIDs GetChunkOrNeighbourBlock(const float& x, const float& y, const float& z);
-
+	void GetFaceNeighbours(const glm::ivec3& faceDirection, const glm::vec3& origin_local, std::array<int, 4>& blocks);
 	// Set neighbouring chunk dirty
 	void SetNeighbourDirty(NEIGHBOUR neighbour);
+	// Updates the neighbour pointers
+	void GetNeighbours();
+
+
 
 	void SetDirty() { isDirty = true; }
 
@@ -116,8 +129,21 @@ public: // Private
 	bool uploadMeshToGPU; // Does chunk need to upload its data to the gpu
 	bool hasWorldData; // Has generated world data
 
-	const glm::ivec2 neighbourOffsets[4] = { glm::ivec2(-1, 0), glm::ivec2(1, 0), glm::ivec2(0, -1), glm::ivec2(0, 1) };
-	Chunk* neighbourChunks[4] = { nullptr, nullptr, nullptr, nullptr };
+	/*
+		LEFT, // X-
+		RIGHT, // X+
+		FRONT, // Z+
+		BACK, // Z-
+		FRONT_LEFT, // X-, Z+
+		FRONT_RIGHT, // X+, Z+
+		BACK_LEFT, // X-, Z-
+		BACK_RIGHT // X+, Z-
+	*/
+	const glm::ivec2 neighbourOffsets[8] = { 
+		{-1, 0}, {1, 0}, {0, 1}, {0, -1},
+		{-1, 1}, {1, 1}, {-1, -1}, {1, -1}
+	};
+	Chunk* neighbourChunks[8];
 
 	// Mesh Data
 	MeshData solidMesh = MeshData();

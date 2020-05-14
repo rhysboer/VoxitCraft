@@ -52,22 +52,22 @@ void WorldGeneration::CreateChunkWorldData(Chunk& chunk) {
 				//	continue;
 				
 				// Water
-				if(y < 16 && height == 0) {
-					chunk.SetBlock(blockIndex, BlockIDs::SAND);
-				} else if(y > mapHeight && y < 15) {
-					chunk.SetBlock(blockIndex, BlockIDs::WATER);
-				} else if(chunk.blocks[blockIndex] == BlockIDs::AIR) {
-					chunk.SetBlock(blockIndex, block);
-				}
-				
-				if(height == 1 && y > waterLevel) {
-					if(biome->GetGenerationParameters().structureDensity <= 0) 
-						continue;
-					
-					if(rand() % biome->GetGenerationParameters().structureDensity == 1) {
-						treePositions.emplace_back(x, y, z);
-					}
-				}
+				//if(y < 16 && height == 0) {
+				//	chunk.SetBlock(blockIndex, BlockIDs::SAND);
+				//} else if(y > mapHeight && y < 15) {
+				//	chunk.SetBlock(blockIndex, BlockIDs::WATER);
+				//} else if(chunk.blocks[blockIndex] == BlockIDs::AIR) {
+				//	chunk.SetBlock(blockIndex, block);
+				//}
+				//
+				//if(height == 1 && y > waterLevel) {
+				//	if(biome->GetGenerationParameters().structureDensity <= 0) 
+				//		continue;
+				//	
+				//	if(rand() % biome->GetGenerationParameters().structureDensity == 1) {
+				//		treePositions.emplace_back(x, y, z);
+				//	}
+				//}
 			}
 		}
 	}
@@ -116,8 +116,8 @@ unsigned int WorldGeneration::CreateChunkWorldData(const Chunk& chunk, std::arra
 				Biome* biome = GetBiome(x, z);
 				BlockIDs block = biome->GetBlock(height);
 
-				//if(y == 0)
-				//	data[blockIndex] = BlockIDs::GRASS;	//chunk.SetBlock(blockIndex, BlockIDs::GRASS);
+				if(y == 0)
+					data[blockIndex] = BlockIDs::GRASS;	//chunk.SetBlock(blockIndex, BlockIDs::GRASS);
 
 				data[blockIndex] = block;
 

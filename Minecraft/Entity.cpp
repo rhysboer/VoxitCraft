@@ -34,6 +34,10 @@ void Entity::SetGround(const bool& isGround) {
 	this->isGrounded = isGround;
 }
 
+void Entity::UsePhysics(const bool& use) {
+	usePhysics = use;
+}
+
 void Entity::Translate(const float& x, const float& y, const float& z) {
 	model->GetTransform().Translate(glm::vec3(x, y, z));
 }
@@ -48,13 +52,15 @@ void Entity::AddForce(const float& x, const float& y, const float& z, const floa
 
 void Entity::OnUpdate() {
 	// Input Velocity
-	if(direction != glm::vec3(0))
+	if(direction != glm::vec3(0) && usePhysics == true)
 		MoveEntity((glm::normalize(direction) * Time::DeltaTime()) * movementSpeed);
 
 	// Gravity
-	velocity += (World::worldGravity / 2.0f) * Time::DeltaTime();
-	MoveEntity(velocity);
-	velocity += (World::worldGravity / 2.0f) * Time::DeltaTime();
+	if(usePhysics == true) {
+		velocity += (World::worldGravity / 2.0f) * Time::DeltaTime();
+		MoveEntity(velocity);
+		velocity += (World::worldGravity / 2.0f) * Time::DeltaTime();
+	}
 
 	direction = glm::vec3(0);
 }

@@ -135,6 +135,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AABB.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="BaseCamera.cpp" />
     <ClCompile Include="Camera2D.cpp" />
@@ -182,6 +183,7 @@
     <ClCompile Include="WorldGeneration.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AABB.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="BaseCamera.h" />
     <ClInclude Include="Camera2D.h" />

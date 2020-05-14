@@ -11,6 +11,11 @@
 class Object3D {
 public:
 
+	enum class RenderType {
+		TRIANGLES = GL_TRIANGLES,
+		LINES = GL_LINES
+	};
+
 	Object3D(const glm::vec3& position, const std::vector<float>& vertex_data, const std::vector<int>& vertex_data_attributes, const std::vector<unsigned int>& indices = std::vector<unsigned int>());
 	~Object3D();
 
@@ -26,9 +31,12 @@ public:
 	void Render(const glm::mat4& projectionView);
 	void Render(BaseCamera& camera);
 	void RawRender(BaseCamera& camera);
+	void BindVAO() const;
+	void BindVBO() const;
 
 	/* Setters */
 	void SetShader(Shader* shader);
+	void SetRender(const RenderType& render);
 	
 	/* Getters */
 	Shader* GetShader() const;
@@ -43,6 +51,8 @@ private:
 
 		unsigned int indicesCount;
 	} object;
+
+	RenderType render;
 
 	Transform transform;
 	Shader* shader;

@@ -20,6 +20,7 @@ public:
 	void SetPosition();
 	void SetMovementSpeed(const float& speed);
 	void SetGround(const bool& isGround);
+	void UsePhysics(const bool& use);
 	
 	// Move entity by set amount, not affected by physics. 
 	void Translate(const glm::vec3& position);

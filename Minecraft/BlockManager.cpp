@@ -12,6 +12,10 @@ const BlockData& BlockManager::GetBlockData(const BlockIDs& id) {
 	return blocks[(int)id];
 }
 
+int BlockManager::TotalBlocks() {
+	return blocks.size();
+}
+
 void BlockManager::LoadBlockDatabase() {
 	blocks.reserve((int)BlockIDs::_TOTAL);
 	blocks.push_back(BlockData(BlockIDs::AIR, "Air", true, false, TextureIndex()));
@@ -24,5 +28,7 @@ void BlockManager::LoadBlockDatabase() {
 	blocks.push_back(BlockData(BlockIDs::CACTUS, "Cactus", false, true, TextureIndex(12, 12, 12, 12, 13, 14)));
 	blocks.push_back(BlockData(BlockIDs::SAND, "Sand", false, true, TextureIndex(8, 8, 8, 8, 8, 8)));
 	blocks.push_back(BlockData(BlockIDs::SNOW_DIRT, "Snowy Dirt", false, true, TextureIndex(15, 15, 15, 15, 16, 0)));
+	blocks.push_back(BlockData(BlockIDs::WOOD_PLANKS, "Wooden Planks", false, true, TextureIndex(17, 17, 17, 17, 17, 17)));
 	blocks.push_back(BlockData(BlockIDs::WATER, "Water", true, false, TextureIndex(0, 0, 0, 0, 0, 0)));
+	
 }

@@ -20,5 +20,5 @@ void main()
 	coords.x += texIndex;
 
 	vec4 texel = texture(texture1, coords);
-	FragColor = vec4(texel.rgb, 0.8); 
+	FragColor = vec4(texel.rgb, 0.7); 
 }

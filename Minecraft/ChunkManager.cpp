@@ -5,7 +5,7 @@ ChunkManager::ChunkManager() {
 	solidShader = ShaderManager::AddShader("voxel", ShaderManager::ShaderType::GRAPHIC);
 	waterShader = ShaderManager::AddShader("water", ShaderManager::ShaderType::GRAPHIC);
 
-	solidShader->SetInt("texture1", 0);
+	solidShader->SetInt("texture1", 3);
 	waterShader->SetInt("texture1", 0);
 
 	terrainTexture = new TileMap("./data/textures/tileset.png", 8, 8);
@@ -29,6 +29,8 @@ ChunkManager::~ChunkManager() {
 void ChunkManager::ChunkLoader() {
 	glm::ivec2 lastChunk = glm::ivec2(0);
 
+	const glm::ivec2 offset[8] = { glm::ivec2(-1, 0), glm::ivec2(0, 1), glm::ivec2(1, 0), glm::ivec2(0, -1),  /*SIDES*/ glm::ivec2(-1, -1), glm::ivec2(1, -1), glm::ivec2(-1, 1), glm::ivec2(1, 1) };
+
 	/*
 	Plan A:
 		1. If a chunk doesnt exist in this location, create one and lock it
@@ -47,6 +49,11 @@ void ChunkManager::ChunkLoader() {
 
 		Rendering: If chunk is dirty, lock it, recreate mesh and apply it. Continue
 		Placing: Add block and make chunk dirty
+
+	Plan C:
+		1. If a chunk doesnt exist in this location, create it
+		2. If chunk does NOT have worldData, create it and set it.
+		3. Before building mesh create world data for surrounding chunks
 	*/
 
 
@@ -87,9 +94,34 @@ void ChunkManager::ChunkLoader() {
 					Chunk* chunk = CreateChunk(glm::ivec2(x, z));
 			
 					if(!chunk->hasWorldData) {
+						std::unique_lock<std::mutex> lock(mutex);
+						lock.unlock();
+
+						// Create Neighbours
+						for(int j = 0; j < 8; j++) {
+							Chunk* neighbour = CreateChunk(glm::ivec2(x + offset[j].x, z + offset[j].y));
+
+							if(!neighbour->hasWorldData) {
+								data.fill(BlockIDs::AIR);
+								structurePos.clear();
+								structureBlocks.clear();
+
+								int height = worldGen.CreateChunkWorldData(*neighbour, data, structurePos, structureBlocks);
+
+								lock.lock();
+								SetBlocks(structurePos, structureBlocks);
+								neighbour->SetWorldData(data, height);
+								lock.unlock();
+							}
+						}
+
 						data.fill(BlockIDs::AIR);
 						structurePos.clear();
 						structureBlocks.clear();
+
+						// Lock chunk
+						//std::unique_lock<std::mutex> lock(mutex);
+						//lock.unlock();
 
 						// Generate World Data
 						int height = worldGen.CreateChunkWorldData(*chunk, data, structurePos, structureBlocks);
@@ -100,13 +132,14 @@ void ChunkManager::ChunkLoader() {
 						SetBlocks(structurePos, structureBlocks);
 
 						// Lock chunk
-						std::unique_lock<std::mutex> lock(mutex);
-
+						//std::unique_lock<std::mutex> lock(mutex);
+						lock.lock();
 						// Set world data
 						chunk->SetWorldData(data, height);
 						// Generate Mesh
 						chunk->GenerateMeshData();
 			
+						lock.unlock();
 						std::this_thread::sleep_for(std::chrono::microseconds(50));
 					}
 				}
@@ -155,7 +188,7 @@ void ChunkManager::ChunkLoader() {
 			//}
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		std::this_thread::sleep_for(std::chrono::microseconds(50));
 	}
 
 }
@@ -171,7 +204,7 @@ void ChunkManager::Render(BaseCamera& camera) {
 	std::unique_lock<std::mutex> lock(mutex);
 
 	// Solid Rendering
-	terrainTexture->BindTexture(0);
+	terrainTexture->BindTexture(3);
 	solidShader->SetMatrix4("projectionView", camera.ProjectionView());
 
 	std::unordered_map<glm::ivec2, Chunk*>::iterator iter = chunks.begin();
@@ -205,12 +238,12 @@ void ChunkManager::Render(BaseCamera& camera) {
 			continue;
 
 		// Regenerate Mesh
-		//if(iter->second->isDirty)
-		//	iter->second->GenerateMeshData();
+		if(iter->second->isDirty)
+			iter->second->GenerateMeshData();
 
 		// Upload Mesh to GPU
-		//if(iter->second->uploadMeshToGPU == true)
-		//	iter->second->CreateMesh();
+		if(iter->second->uploadMeshToGPU == true)
+			iter->second->CreateMesh();
 
 		iter->second->RenderOpaque(*waterShader);
 	}
@@ -257,6 +290,14 @@ void ChunkManager::SetBlocks(const std::vector<glm::vec3>& pos, std::vector<Bloc
 
 		chunk->SetBlock(pos[i], (i < blockSize) ? blocks[i] : BlockIDs::AIR);
 	}
+}
+
+TileMap& ChunkManager::GetTileMapTerrain() const {
+	return *terrainTexture;
+}
+
+TileMap& ChunkManager::GetTileMapWater() const {
+	return *waterTexture;
 }
 
 void ChunkManager::GetSolidBlocksInArea(const glm::vec3& worldPosition, const glm::vec3& size, std::vector<glm::vec3>& output) {

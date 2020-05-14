@@ -7,6 +7,10 @@
 #include "Renderer.h"
 #include "Object3D.h"
 
+#include "Raycast.h"
+
+#include "Util.h"
+
 enum class PostProcessEffect {
 	NORMAL,
 	UNDER_WATER
@@ -37,8 +41,10 @@ private:
 	
 	// Test
 	Framebuffer* blockBuffer;
-	BaseCamera* camera;
+	BaseCamera* camera2D;
 	Object3D* cube;
+	Object3D* blockHighlight;
+	int currentBlock;
 
 	World* world;
 

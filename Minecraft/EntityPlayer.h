@@ -5,6 +5,9 @@
 #include "imgui.h"
 #include "Sprite.h"
 #include "Raycast.h"
+#include "AABB.h"
+
+#include "Util.h"
 
 class FPSCamera;
 
@@ -17,7 +20,12 @@ public:
 	virtual void OnUpdate() override;
 
 	FPSCamera* Camera();
+	
+	BlockIDs GetHeldBlock();
+	
 private:
+
+	int currentBlock;
 
 	Sprite* crosshair;
 	FPSCamera* camera;

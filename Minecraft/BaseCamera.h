@@ -4,7 +4,6 @@
 
 #define DIRTY_CHECK if(isDirty) UpdateCamera();
 
-//class Engine;
 class BaseCamera {
 public:
 

@@ -5,6 +5,7 @@ unsigned int Input::keyStates[GLFW_KEY_LAST];
 unsigned int Input::keyPrevStates[GLFW_KEY_LAST];
 unsigned int Input::mouseButtonStates[GLFW_MOUSE_BUTTON_LAST];
 unsigned int Input::mouseButtonPrevStates[GLFW_MOUSE_BUTTON_LAST];
+int Input::mouseScrollState[2];
 
 glm::vec2 Input::mousePosition = glm::vec2(0.0f);
 glm::vec2 Input::mouseLastPosition = glm::vec2(0.0f);
@@ -50,6 +51,10 @@ bool Input::IsKeyPressed(const int& key) {
 	return false;
 }
 
+double Input::GetMouseScroll(Scroll direction) {
+	return mouseScrollState[(int)direction];
+}
+
 void Input::DisableCursor(const bool& hideCursor) {
 	if(hideCursor == true) {
 		glfwSetInputMode(&Engine::GetWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -67,6 +72,7 @@ void Input::SetCallbacks(GLFWwindow* window) {
 	glfwSetKeyCallback(window, KeyCallback);
 	glfwSetMouseButtonCallback(window, MouseButtonCallback);
 	glfwSetCursorPosCallback(window, MousePositionCallback);
+	glfwSetScrollCallback(window, MouseScrollCallback);
 }
 
 void Input::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -86,6 +92,11 @@ void Input::MousePositionCallback(GLFWwindow* window, double xpos, double ypos) 
 	mouseDelta = mousePosition - mouseLastPosition;
 }
 
+void Input::MouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+	mouseScrollState[0] += xoffset;
+	mouseScrollState[1] += yoffset;
+}
+
 void Input::Update() {
 	// Update keyboard states
 	for(int i = 0; i < GLFW_KEY_LAST; i++) 
@@ -94,6 +105,9 @@ void Input::Update() {
 	// Update mouse states
 	for(int i = 0; i < GLFW_MOUSE_BUTTON_LAST; i++)
 		mouseButtonPrevStates[i] = mouseButtonStates[i];
+
+	for(int i = 0; i < 2; i++)
+		mouseScrollState[i] = 0;
 
 	mouseDelta = glm::vec2(0.0);
 }

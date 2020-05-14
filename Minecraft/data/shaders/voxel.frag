@@ -7,6 +7,7 @@ uniform sampler2D texture1;
 
 in vec2 _texCoords;
 in vec3 _normals;
+in float _ambient;
 
 out vec4 FragColor;
 
@@ -27,5 +28,6 @@ void main()
 	if(texel.a < 0.5)
 		discard;
 
-	FragColor = vec4(texel.rgb * GetLight(_normals), texel.a);
+	float ambient = (_ambient + 1.0) / 4.0; 
+	FragColor = vec4(texel.rgb * GetLight(_normals) * ambient, texel.a);
 }

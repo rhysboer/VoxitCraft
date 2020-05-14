@@ -85,7 +85,6 @@ void Chunk::SetBlock(const unsigned int& index, const BlockIDs& id) {
 
 	highestBlock = glm::max(highestBlock, (int)glm::floor(index / CHUNK_SLICE));
 
-
 	// IF block is on the side of the chunk, dirty neighbour
 	glm::vec3 pos = IndexToLocalPos(index);
 	if(pos.x == 0)
@@ -93,9 +92,17 @@ void Chunk::SetBlock(const unsigned int& index, const BlockIDs& id) {
 	if(pos.x == CHUNK_SIZE - 1)
 		SetNeighbourDirty(NEIGHBOUR::RIGHT);
 	if(pos.z == 0)
-		SetNeighbourDirty(NEIGHBOUR::FRONT);
-	if(pos.z == CHUNK_SIZE - 1)
 		SetNeighbourDirty(NEIGHBOUR::BACK);
+	if(pos.z == CHUNK_SIZE - 1)
+		SetNeighbourDirty(NEIGHBOUR::FRONT);
+	if(pos.x == 0 && pos.z == 0)
+		SetNeighbourDirty(NEIGHBOUR::BACK_LEFT);
+	if(pos.x == CHUNK_SIZE - 1 && pos.z == 0)
+		SetNeighbourDirty(NEIGHBOUR::BACK_RIGHT);
+	if(pos.x == 0 && pos.z == CHUNK_SIZE - 1)
+		SetNeighbourDirty(NEIGHBOUR::FRONT_LEFT);
+	if(pos.x == CHUNK_SIZE - 1 && pos.z == CHUNK_SIZE - 1)
+		SetNeighbourDirty(NEIGHBOUR::FRONT_RIGHT);
 
 	// Set Block
 	blocks[index] = id;
@@ -124,6 +131,7 @@ BlockIDs Chunk::GetBlockLocal(const float& x, const float& y, const float& z) co
 	return BlockIDs::AIR;
 }
 
+// X, Y & Z are in local coords
 BlockIDs Chunk::GetChunkOrNeighbourBlock(const float& x, const float& y, const float& z) {
 	// If position is above or under the chunk
 	if(y < 0 || y >= CHUNK_HEIGHT)
@@ -133,14 +141,34 @@ BlockIDs Chunk::GetChunkOrNeighbourBlock(const float& x, const float& y, const f
 	if(IsPositionInChunk(x, y, z))
 		return blocks[ToBlockIndex(x, y, z)];
 	
+	glm::ivec2 index = glm::ivec2(glm::floor(x / CHUNK_SIZE), glm::floor(z / CHUNK_SIZE));
+
+	NEIGHBOUR neighbour;
+	if(index.x == 1 && index.y == 0) neighbour = NEIGHBOUR::RIGHT;
+	else if(index.x == -1 && index.y == 0) neighbour = NEIGHBOUR::LEFT;
+	else if(index.x == 0 && index.y == 1) neighbour = NEIGHBOUR::FRONT;
+	else if(index.x == 0 && index.y == -1) neighbour = NEIGHBOUR::BACK;
+	else if(index.x == -1 && index.y == -1) neighbour = NEIGHBOUR::BACK_LEFT;
+	else if(index.x == 1 && index.y == -1) neighbour = NEIGHBOUR::BACK_RIGHT;
+	else if(index.x == -1 && index.y == 1) neighbour = NEIGHBOUR::FRONT_LEFT;
+	else neighbour = NEIGHBOUR::FRONT_RIGHT;
+
+	if(neighbourChunks[(int)neighbour] == nullptr)
+		return BlockIDs::AIR;
+	
+	return neighbourChunks[(int)neighbour]->GetBlockLocal(Math::Modulo(x, CHUNK_SIZE), y, Math::Modulo(z, CHUNK_SIZE) );
+
+	/*
 	// If Righthand side of chunk
 	if(x >= CHUNK_SIZE) {
-		if(neighbourChunks[(int)NEIGHBOUR::RIGHT] == nullptr) {
-			neighbourChunks[(int)NEIGHBOUR::RIGHT] = chunkManager->FindChunk(x + worldCoord.x, z + worldCoord.z);
-	
-			if(neighbourChunks[(int)NEIGHBOUR::RIGHT] == nullptr)
-				return BlockIDs::AIR;
-		}
+		//if(neighbourChunks[(int)NEIGHBOUR::RIGHT] == nullptr) {
+		//	neighbourChunks[(int)NEIGHBOUR::RIGHT] = chunkManager->FindChunk(x + worldCoord.x, z + worldCoord.z);
+		//
+		//	if(neighbourChunks[(int)NEIGHBOUR::RIGHT] == nullptr)
+		//		return BlockIDs::AIR;
+		//}
+		if(neighbourChunks[(int)NEIGHBOUR::RIGHT] == nullptr)
+			return BlockIDs::AIR;
 	
 		return neighbourChunks[(int)NEIGHBOUR::RIGHT]->GetBlockLocal(
 			Math::Modulo(x, CHUNK_SIZE),
@@ -151,12 +179,12 @@ BlockIDs Chunk::GetChunkOrNeighbourBlock(const float& x, const float& y, const f
 	
 	// If Lefthand side of chunk
 	if(x < 0) {
-		if(neighbourChunks[(int)NEIGHBOUR::LEFT] == nullptr) {
-			neighbourChunks[(int)NEIGHBOUR::LEFT] = chunkManager->FindChunk(x + worldCoord.x, z + worldCoord.z);
-	
-			if(neighbourChunks[(int)NEIGHBOUR::LEFT] == nullptr)
-				return BlockIDs::AIR;
-		}
+		//if(neighbourChunks[(int)NEIGHBOUR::LEFT] == nullptr) {
+		//	neighbourChunks[(int)NEIGHBOUR::LEFT] = chunkManager->FindChunk(x + worldCoord.x, z + worldCoord.z);
+		//
+		//}
+		if(neighbourChunks[(int)NEIGHBOUR::LEFT] == nullptr)
+			return BlockIDs::AIR;
 	
 		return neighbourChunks[(int)NEIGHBOUR::LEFT]->GetBlockLocal(
 			Math::Modulo(x, CHUNK_SIZE),
@@ -167,12 +195,11 @@ BlockIDs Chunk::GetChunkOrNeighbourBlock(const float& x, const float& y, const f
 	
 	// If front of the chunk (towards screen)
 	if(z < 0) {
-		if(neighbourChunks[(int)NEIGHBOUR::FRONT] == nullptr) {
-			neighbourChunks[(int)NEIGHBOUR::FRONT] = chunkManager->FindChunk(x + worldCoord.x, z + worldCoord.z);
-	
-			if(neighbourChunks[(int)NEIGHBOUR::FRONT] == nullptr)
-				return BlockIDs::AIR;
-		}
+		//if(neighbourChunks[(int)NEIGHBOUR::FRONT] == nullptr) {
+		//	neighbourChunks[(int)NEIGHBOUR::FRONT] = chunkManager->FindChunk(x + worldCoord.x, z + worldCoord.z);
+		//}	
+		if(neighbourChunks[(int)NEIGHBOUR::FRONT] == nullptr)
+			return BlockIDs::AIR;
 	
 		return neighbourChunks[(int)NEIGHBOUR::FRONT]->GetBlockLocal(
 			Math::Modulo(x, CHUNK_SIZE),
@@ -183,12 +210,12 @@ BlockIDs Chunk::GetChunkOrNeighbourBlock(const float& x, const float& y, const f
 	
 	// If back side of chunk (away from screen)
 	if(z >= CHUNK_SIZE) {
-		if(neighbourChunks[(int)NEIGHBOUR::BACK] == nullptr) {
-			neighbourChunks[(int)NEIGHBOUR::BACK] = chunkManager->FindChunk(x + worldCoord.x, z + worldCoord.z);
-	
-			if(neighbourChunks[(int)NEIGHBOUR::BACK] == nullptr)
-				return BlockIDs::AIR;
-		}
+		//if(neighbourChunks[(int)NEIGHBOUR::BACK] == nullptr) {
+		//	neighbourChunks[(int)NEIGHBOUR::BACK] = chunkManager->FindChunk(x + worldCoord.x, z + worldCoord.z);
+		//
+		//}
+		if(neighbourChunks[(int)NEIGHBOUR::BACK] == nullptr)
+			return BlockIDs::AIR;
 	
 		return neighbourChunks[(int)NEIGHBOUR::BACK]->GetBlockLocal(
 			Math::Modulo(x, CHUNK_SIZE),
@@ -198,11 +225,84 @@ BlockIDs Chunk::GetChunkOrNeighbourBlock(const float& x, const float& y, const f
 	}
 	
 	return BlockIDs::AIR;
+	*/
+}
 
-	// BACKUP
-	//if(!IsPositionInChunk(x, y, z))
-	//	return chunkManager->GetBlock(glm::vec3(x, y, z) + worldCoord);
-	//return blocks[ToBlockIndex(glm::vec3(x, y, z))];
+void Chunk::GetNeighbours() {
+	for(int i = 0; i < (int)NEIGHBOUR::_TOTAL; i++) {
+		if(neighbourChunks[i] == nullptr) {
+			neighbourChunks[i] = chunkManager->FindChunk(glm::vec2(localCoord.x + neighbourOffsets[i].x, localCoord.y + neighbourOffsets[i].y));
+		}
+	}
+}
+
+void Chunk::GetFaceNeighbours(const glm::ivec3& faceDirection, const glm::vec3& origin_local, std::array<int, 4>& blocks) {
+	glm::vec3 offsets[9];
+
+	if(faceDirection.y != 0) {
+		offsets[0] = glm::vec3( 0 * faceDirection.y, faceDirection.y, 1);
+		offsets[1] = glm::vec3( 1 * faceDirection.y, faceDirection.y, 1);
+		offsets[2] = glm::vec3( 1 * faceDirection.y, faceDirection.y, 0);
+		offsets[3] = glm::vec3( 1 * faceDirection.y, faceDirection.y,-1);
+		offsets[4] = glm::vec3( 0 * faceDirection.y, faceDirection.y,-1);
+		offsets[5] = glm::vec3(-1 * faceDirection.y, faceDirection.y,-1);
+		offsets[6] = glm::vec3(-1 * faceDirection.y, faceDirection.y, 0);
+		offsets[7] = glm::vec3(-1 * faceDirection.y, faceDirection.y, 1);
+		offsets[8] = glm::vec3( 0 * faceDirection.y, faceDirection.y, 1);
+	} else if(faceDirection.x != 0) {
+		offsets[0] = glm::vec3(faceDirection.x, 0, 1 * faceDirection.x);
+		offsets[1] = glm::vec3(faceDirection.x,-1, 1 * faceDirection.x);
+		offsets[2] = glm::vec3(faceDirection.x,-1, 0 * faceDirection.x);
+		offsets[3] = glm::vec3(faceDirection.x,-1,-1 * faceDirection.x);
+		offsets[4] = glm::vec3(faceDirection.x, 0,-1 * faceDirection.x);
+		offsets[5] = glm::vec3(faceDirection.x, 1,-1 * faceDirection.x);
+		offsets[6] = glm::vec3(faceDirection.x, 1, 0 * faceDirection.x);
+		offsets[7] = glm::vec3(faceDirection.x, 1, 1 * faceDirection.x);
+		offsets[8] = glm::vec3(faceDirection.x, 0, 1 * faceDirection.x);
+	} else if(faceDirection.z != 0) {
+		offsets[0] = glm::vec3(-1 * faceDirection.z, 0 , faceDirection.z);
+		offsets[1] = glm::vec3(-1 * faceDirection.z,-1,  faceDirection.z);
+		offsets[2] = glm::vec3( 0 * faceDirection.z,-1,  faceDirection.z);
+		offsets[3] = glm::vec3( 1 * faceDirection.z,-1,  faceDirection.z);
+		offsets[4] = glm::vec3( 1 * faceDirection.z, 0 , faceDirection.z);
+		offsets[5] = glm::vec3( 1 * faceDirection.z, 1 , faceDirection.z);
+		offsets[6] = glm::vec3( 0 * faceDirection.z, 1 , faceDirection.z);
+		offsets[7] = glm::vec3(-1 * faceDirection.z, 1 , faceDirection.z);
+		offsets[8] = glm::vec3(-1 * faceDirection.z, 0 , faceDirection.z);
+	}
+	/*
+		Vertex Order
+			Y+
+	  4th_______ 3rd
+		|\	    |
+	  X-|  \    | X+
+		|    \  |
+	 1st|______\|2nd
+			Y-
+		[7][6][5]
+		[0][_][4]
+		[1][2][3]
+
+		0 = 0, 1, 2
+		1 = 2, 3, 4
+		2 = 4, 5, 6
+		3 = 6, 7, 0
+	*/
+	
+	if(origin_local.x == 15 && origin_local.z == 15) {
+		printf("brekpoint\n");
+	}
+	
+	glm::vec3 pos;
+	for(int i = 0; i < 4; i++) {
+		int index = i * 2;
+		pos = origin_local + offsets[i];
+
+		blocks[i] = 0;
+		blocks[i] += (GetChunkOrNeighbourBlock(origin_local.x + offsets[index + 0].x, origin_local.y + offsets[index + 0].y, origin_local.z + offsets[index + 0].z) == BlockIDs::AIR) ? 1.0f : 0.0f;
+		blocks[i] += (GetChunkOrNeighbourBlock(origin_local.x + offsets[index + 1].x, origin_local.y + offsets[index + 1].y, origin_local.z + offsets[index + 1].z) == BlockIDs::AIR) ? 1.0f : 0.0f;
+		blocks[i] += (GetChunkOrNeighbourBlock(origin_local.x + offsets[index + 2].x, origin_local.y + offsets[index + 2].y, origin_local.z + offsets[index + 2].z) == BlockIDs::AIR) ? 1.0f : 0.0f;
+	}
 }
 
 void Chunk::SetNeighbourDirty(NEIGHBOUR neighbour) {
@@ -286,7 +386,6 @@ bool Chunk::NeighbourSlices(const unsigned int& y) {
 	return true;
 }
 
-
 #pragma region Generation
 
 void Chunk::SetWorldData(const std::array<BlockIDs, CHUNK_MASS>& data, int height) {
@@ -301,9 +400,26 @@ void Chunk::SetWorldData(const std::array<BlockIDs, CHUNK_MASS>& data, int heigh
 
 	hasWorldData = true;
 	isDirty = true;
+
+	if(localCoord == glm::ivec2(-1, -2) || localCoord == glm::ivec2(0, -2)) {
+		printf("X: %i, z: %i\n", this->localCoord.x, this->localCoord.y);
+		printf("LEFT: %s\n", (neighbourChunks[(int)NEIGHBOUR::LEFT] != nullptr) ? "true" : "false");
+		printf("RIGHT: %s\n", (neighbourChunks[(int)NEIGHBOUR::RIGHT] != nullptr) ? "true" : "false");
+		printf("BACK: %s\n", (neighbourChunks[(int)NEIGHBOUR::BACK] != nullptr) ? "true" : "false");
+		printf("FRONT: %s\n\n", (neighbourChunks[(int)NEIGHBOUR::FRONT] != nullptr) ? "true" : "false");
+	}
 }
 
 void Chunk::GenerateMeshData() {
+	// Update Neighbour Pointers
+	GetNeighbours();
+
+	for(int i = 0; i < (int)NEIGHBOUR::_TOTAL; i++) {
+		if(neighbourChunks[i] == nullptr)
+			return;
+	}
+
+
 	// Vertex Offset
 	const float offset[] = { 0.0f, 0.0f, 1.0f, 1.0f };
 
@@ -318,17 +434,22 @@ void Chunk::GenerateMeshData() {
 
 	// Texture Coordinates of a block face
 	std::array<glm::vec2, 4> texCoords = std::array<glm::vec2, 4>();
+	std::array<int, 4> ambient = std::array<int, 4>();
 
 	auto BuildFace = [](const BlockData const * block, const BlockData const * neighbour) {
 		if(!block->isTransparent && neighbour->isTransparent)
 			return true;
-		else if (block->isTransparent && neighbour->id == BlockIDs::AIR)
+		else if (block->isTransparent && neighbour->id == BlockIDs::AIR || (block->isTransparent && block->id != neighbour->id && neighbour->isTransparent))
 			return true;
 		return false;
 	};
 
 	// Timer
 	std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+
+	if(localCoord.x == -1 && localCoord.y == 0) {
+		printf("breakpoint");
+	}
 
 	for(int y = 0; y < highestBlock + 1; y++) {
 		if(NeighbourSlices(y))
@@ -356,6 +477,8 @@ void Chunk::GenerateMeshData() {
 					else
 						chunkManager->terrainTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::BACK], texCoords);
 
+					GetFaceNeighbours(glm::ivec3(0, 0, 1), glm::vec3(x, y, z), ambient);
+
 					for(int i = 0; i < 4; i++) {
 						// Vertices
 						mesh->meshData.emplace_back(x + offset[(i + 1) % 4]);	// X
@@ -370,6 +493,9 @@ void Chunk::GenerateMeshData() {
 						// Tex Coordinates
 						mesh->meshData.emplace_back(texCoords[i].x); // X
 						mesh->meshData.emplace_back(texCoords[i].y); // Y
+
+						// Ambient Occlusion
+						mesh->meshData.emplace_back(ambient[i]);
 					}
 
 					mesh->indices.emplace_back(*indicesIndex + 0);
@@ -390,6 +516,29 @@ void Chunk::GenerateMeshData() {
 					else
 						chunkManager->terrainTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::RIGHT], texCoords);
 				
+
+					/*
+						Vertex Order
+							
+					  4th_______ 3rd
+						|\	X-  |
+					 Z+ |  \    | Z-
+						|    \  |
+					 1st|___X+_\|2nd
+						   
+						[7][6][5]
+						[0][_][4]
+						[1][2][3]
+					
+						0 = 0, 1, 2
+						1 = 2, 3, 4
+						2 = 4, 5, 6
+						3 = 6, 7, 0
+					*/
+
+
+					GetFaceNeighbours(glm::ivec3(1, 0, 0), glm::vec3(x, y, z), ambient);
+
 					for(int i = 0; i < 4; i++) {
 						// Vertices
 						mesh->meshData.emplace_back(x + 1.0f);					// X
@@ -404,6 +553,9 @@ void Chunk::GenerateMeshData() {
 						// Tex Coordinates
 						mesh->meshData.emplace_back(texCoords[i].x); // X
 						mesh->meshData.emplace_back(texCoords[i].y); // Y
+
+						// Ambient Occlusion
+						mesh->meshData.emplace_back(ambient[i]);
 					}
 				
 					mesh->indices.emplace_back(*indicesIndex + 0);
@@ -424,6 +576,8 @@ void Chunk::GenerateMeshData() {
 					else
 						chunkManager->terrainTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::FRONT], texCoords);
 				
+					GetFaceNeighbours(glm::ivec3(0, 0, -1), glm::vec3(x, y, z), ambient);
+
 					for(int i = 0; i < 4; i++) {
 						// Vertices
 						mesh->meshData.emplace_back(x + offset[(i + 3) % 4]);			// X
@@ -438,6 +592,9 @@ void Chunk::GenerateMeshData() {
 						// Tex Coordinates
 						mesh->meshData.emplace_back(texCoords[i].x); // X
 						mesh->meshData.emplace_back(texCoords[i].y); // Y
+
+						// Ambient Occlusion
+						mesh->meshData.emplace_back(ambient[i]);
 					}
 				
 					mesh->indices.emplace_back(*indicesIndex + 0);
@@ -459,6 +616,8 @@ void Chunk::GenerateMeshData() {
 					if(block->id != BlockIDs::WATER)
 						chunkManager->terrainTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::LEFT], texCoords);
 				
+					GetFaceNeighbours(glm::ivec3(-1, 0, 0), glm::vec3(x, y, z), ambient);
+
 					for(int i = 0; i < 4; i++) {
 						// Vertices
 						mesh->meshData.emplace_back(x);							// X
@@ -473,6 +632,9 @@ void Chunk::GenerateMeshData() {
 						// Tex Coordinates
 						mesh->meshData.emplace_back(texCoords[i].x); // X
 						mesh->meshData.emplace_back(texCoords[i].y); // Y
+
+						// Ambient Occlusion
+						mesh->meshData.emplace_back(ambient[i]);
 					}
 				
 					mesh->indices.emplace_back(*indicesIndex + 0);
@@ -493,6 +655,28 @@ void Chunk::GenerateMeshData() {
 					else
 						chunkManager->terrainTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::UP], texCoords);
 				
+
+					/*
+						Vertex Order
+							Z-
+					 3rd _______ 2nd
+						|\	    |
+					 X- |  \    | X+
+						|    \  |
+					 4th|______\| 1st
+						   Z+
+						[5][4][3]
+						[6][_][2]
+						[7][0][1]
+
+						0 = 0, 1, 2
+						1 = 2, 3, 4
+						2 = 4, 5, 6
+						3 = 6, 7, 0
+					*/
+
+					GetFaceNeighbours(glm::ivec3(0, 1, 0), glm::vec3(x, y, z), ambient);
+
 					for(int i = 0; i < 4; i++) {
 						// Vertices
 						mesh->meshData.emplace_back(x + offset[(i + 2) % 4]);	// X
@@ -507,6 +691,10 @@ void Chunk::GenerateMeshData() {
 						// Tex Coordinates
 						mesh->meshData.emplace_back(texCoords[i].x); // X
 						mesh->meshData.emplace_back(texCoords[i].y); // Y
+
+						
+						// Ambient Occlusion
+						mesh->meshData.emplace_back(ambient[i]);
 					}
 				
 					mesh->indices.emplace_back(*indicesIndex + 0);
@@ -527,11 +715,13 @@ void Chunk::GenerateMeshData() {
 					else
 						chunkManager->terrainTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::DOWN], texCoords);
 				
+					GetFaceNeighbours(glm::ivec3(0,-1, 0), glm::vec3(x, y, z), ambient);
+
 					for(int i = 0; i < 4; i++) {
 						// Vertices
-						mesh->meshData.emplace_back(x + offset[(i + 1) % 4]);	// X
-						mesh->meshData.emplace_back(y);							// Y
-						mesh->meshData.emplace_back(z + offset[i % 4]);			// Z
+						mesh->meshData.emplace_back(x + offset[(i + 0) % 4]);	// X
+						mesh->meshData.emplace_back(y);									// Y
+						mesh->meshData.emplace_back(z + offset[(i + 3) % 4]);			// Z
 				
 						// Normals
 						mesh->meshData.emplace_back(0.0f); // X
@@ -541,6 +731,9 @@ void Chunk::GenerateMeshData() {
 						// Tex Coordinates
 						mesh->meshData.emplace_back(texCoords[i].x); // X
 						mesh->meshData.emplace_back(texCoords[i].y); // Y
+
+						// Ambient Occlusion
+						mesh->meshData.emplace_back(ambient[i]);
 					}
 				
 					mesh->indices.emplace_back(*indicesIndex + 0);
@@ -592,13 +785,15 @@ void Chunk::CreateMesh() {
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * solidMesh.indices.size(), solidMesh.indices.data(), GL_DYNAMIC_DRAW);
 
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(0 * sizeof(float))); // Vertices
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))); // Normals
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float))); // Tex Coords
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(0 * sizeof(float))); // Vertices
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float))); // Normals
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float))); // Tex Coords
+		glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(8 * sizeof(float))); // PVAO
 
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
 	}
 
 	// Generate Water Buffer
@@ -617,13 +812,15 @@ void Chunk::CreateMesh() {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, waterMesh.ebo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * waterMesh.indices.size(), waterMesh.indices.data(), GL_DYNAMIC_DRAW);
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(0 * sizeof(float))); // Vertices
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))); // Normals
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float))); // Tex Coords
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(0 * sizeof(float))); // Vertices
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float))); // Normals
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float))); // Tex Coords
+		glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(8 * sizeof(float))); // PVAO
 
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
+		glEnableVertexAttribArray(3);
 	}
 
 	glBindVertexArray(0);

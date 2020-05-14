@@ -17,6 +17,7 @@ enum class BlockIDs {
 	CACTUS,
 	SAND,
 	SNOW_DIRT,
+	WOOD_PLANKS,
 	WATER,
 
 	// Block type error
@@ -69,6 +70,7 @@ public:
 	static void LoadBlockDatabase();
 
 	static const BlockData& GetBlockData(const BlockIDs& id);
+	static int TotalBlocks();
 
 private:
 	~BlockManager();

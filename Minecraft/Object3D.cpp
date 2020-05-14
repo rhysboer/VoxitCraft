@@ -1,6 +1,7 @@
 #include "Object3D.h"
 
-Object3D::Object3D(const glm::vec3& position, const std::vector<float>& vertex_data, const std::vector<int>& vertex_data_attributes, const std::vector<unsigned int>& indices) : transform() {
+Object3D::Object3D(const glm::vec3& position, const std::vector<float>& vertex_data, const std::vector<int>& vertex_data_attributes, const std::vector<unsigned int>& indices) 
+	: transform(), render(RenderType::TRIANGLES) {
 	this->transform.SetPosition(position);
 
 	// Generate Vertex & Buffer Array
@@ -48,7 +49,6 @@ Object3D::~Object3D() {
 	// TODO: Delete object data
 }
 
-
 #pragma region Primitives
 
 Object3D* Object3D::CreateObject_Plane(const glm::vec3& position, const unsigned int& size) {
@@ -94,14 +94,15 @@ Object3D* Object3D::CreateObject_Plane(const glm::vec3& position, const unsigned
 
 Object3D* Object3D::CreateObject_Cube(const glm::vec3& position) {
 	std::vector<float> vertices = std::vector<float>({
+		/* 1-3 = Vertex Pos, 4-6 = Normals, 7-8 = Texture Coords*/
 		/* FRONT */
-		 1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-		 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-		-1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		 1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // 0
+		 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, // 1
+		-1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, // 2
 						   
-		-1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-		-1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-		 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, // 3
+		-1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, // 2
+		 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, // 1
 
 		/* RIGHT */
 		 1.0f,-1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
@@ -159,6 +160,7 @@ Object3D* Object3D::CreateObject_Cube(const glm::vec3& position) {
 
 Object3D* Object3D::CreateObject_Quad(const glm::vec3& position) {
 	std::vector<float> vertices = std::vector<float>({
+		/* 1-3 = Vertex Pos, 4-6 = Normals, 7-8 = Texture Coords*/
 		-1.0f,-1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
 		-1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
 		 1.0f,-1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
@@ -256,10 +258,14 @@ void Object3D::Render(const glm::mat4& projectionView) {
 	shader->SetMatrix4(SHADER_MODEL, transform.GetMatrix());
 	shader->SetMatrix4(SHADER_PROJECTIONVIEW, projectionView);
 
-	if(object.EBO <= 0)
-		glDrawArrays(GL_TRIANGLES, 0, object.indicesCount);
-	else
-		glDrawElements(GL_TRIANGLES, object.indicesCount, GL_UNSIGNED_INT, 0);
+	if(render == RenderType::TRIANGLES) {
+		if(object.EBO <= 0)
+			glDrawArrays(GL_TRIANGLES, 0, object.indicesCount);
+		else
+			glDrawElements(GL_TRIANGLES, object.indicesCount, GL_UNSIGNED_INT, 0);
+	} else if(render == RenderType::LINES) {
+		glDrawArrays(GL_LINES, 0, object.indicesCount);
+	}
 }
 
 void Object3D::Render(BaseCamera& camera) {
@@ -277,8 +283,20 @@ void Object3D::RawRender(BaseCamera& camera) {
 		glDrawElements(GL_TRIANGLES, object.indicesCount, GL_UNSIGNED_INT, 0);
 }
 
+void Object3D::BindVAO() const {
+	glBindVertexArray(object.VAO);
+}
+
+void Object3D::BindVBO() const {
+	glBindBuffer(GL_ARRAY_BUFFER, object.VBO);
+}
+
 void Object3D::SetShader(Shader* shader) {
 	this->shader = shader;
+}
+
+void Object3D::SetRender(const RenderType& render) {
+	this->render = render;
 }
 
 Shader* Object3D::GetShader() const {

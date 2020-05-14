@@ -17,7 +17,7 @@ void main()
 
 	// Under Water
 	if(effectType == 1){
-		result.rgb = mix(colour.rgb, vec3(0, 0.5, 1), clamp(pow(depth, 20.0f), 0.0, 1.0));
+		result.rgb = mix(colour.rgb, vec3(0, 0.5, 1), clamp(pow(depth, 20.0), 0.0, 1.0));
 	}
 
 	FragColor = result;
