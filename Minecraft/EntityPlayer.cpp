@@ -64,9 +64,9 @@ void EntityPlayer::OnUpdate() {
 	}
 	
 
-	if(Input::IsKeyPressed(GLFW_KEY_3)) {
-		World::GetChunkManager().FindChunk(this->GetPosition())->SetDirty();
-	}
+	//if(Input::IsKeyPressed(GLFW_KEY_3)) {
+	//	(*World::GetChunkManager().FindChunk(this->GetPosition()))->SetDirty();
+	//}
 
 	if(Input::IsKeyPressed(GLFW_KEY_LEFT_SHIFT))
 		this->usePhysics = !this->usePhysics;

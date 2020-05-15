@@ -11,7 +11,7 @@ FPSCamera::~FPSCamera() {
 void FPSCamera::Update() {
 	glm::vec2 deltaPos = Input::MouseDeltaPosition();
 	Rotate(deltaPos.x, deltaPos.y, 0.3f);
-
+	
 	if(pitch > 89.0f)
 		pitch = 89.0f;
 	if(pitch < -89.0f)

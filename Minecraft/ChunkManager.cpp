@@ -98,30 +98,26 @@ void ChunkManager::ChunkLoader() {
 						lock.unlock();
 
 						// Create Neighbours
-						for(int j = 0; j < 8; j++) {
-							Chunk* neighbour = CreateChunk(glm::ivec2(x + offset[j].x, z + offset[j].y));
-
-							if(!neighbour->hasWorldData) {
-								data.fill(BlockIDs::AIR);
-								structurePos.clear();
-								structureBlocks.clear();
-
-								int height = worldGen.CreateChunkWorldData(*neighbour, data, structurePos, structureBlocks);
-
-								lock.lock();
-								SetBlocks(structurePos, structureBlocks);
-								neighbour->SetWorldData(data, height);
-								lock.unlock();
-							}
-						}
+						//for(int j = 0; j < 8; j++) {
+						//	Chunk* neighbour = CreateChunk(glm::ivec2(x + offset[j].x, z + offset[j].y));
+						//
+						//	if(!neighbour->hasWorldData) {
+						//		data.fill(BlockIDs::AIR);
+						//		structurePos.clear();
+						//		structureBlocks.clear();
+						//
+						//		int height = worldGen.CreateChunkWorldData(*neighbour, data, structurePos, structureBlocks);
+						//
+						//		lock.lock();
+						//		SetBlocks(structurePos, structureBlocks);
+						//		neighbour->SetWorldData(data, height);
+						//		lock.unlock();
+						//	}
+						//}
 
 						data.fill(BlockIDs::AIR);
 						structurePos.clear();
 						structureBlocks.clear();
-
-						// Lock chunk
-						//std::unique_lock<std::mutex> lock(mutex);
-						//lock.unlock();
 
 						// Generate World Data
 						int height = worldGen.CreateChunkWorldData(*chunk, data, structurePos, structureBlocks);
@@ -145,47 +141,13 @@ void ChunkManager::ChunkLoader() {
 				}
 			}
 			
-			glm::ivec2 currChunk = glm::ivec2(World::GetPlayer().GetPosition().x / 16, World::GetPlayer().GetPosition().z / 16);
+			glm::ivec2 currChunk = glm::ivec2(glm::floor(World::GetPlayer().GetPosition().x / Chunk::CHUNK_SIZE), glm::floor(World::GetPlayer().GetPosition().z / Chunk::CHUNK_SIZE));
 			if(currChunk != lastChunk) {
-				i = -1;
+ 				i = -1;
 				lastChunk = currChunk;
 			}
 
 			std::this_thread::sleep_for(std::chrono::microseconds(50));
-			// Old
-			//for(int z = minZ; z <= maxZ; z++) {
-			//	for(int x = minX; x <= maxX; x++) {
-			//		Chunk* chunk = CreateChunk(glm::ivec2(x, z));
-			//
-			//		if(!chunk->hasWorldData) {
-			//
-			//			// Create neighbour data
-			//			//UpdateNeighbours(x, z);
-			//
-			//			std::unique_lock<std::mutex> lock(mutex);
-			//			worldGen.CreateChunkWorldData(*chunk);
-			//			chunk->GenerateMeshData();
-			//		} else if (chunk->isDirty){
-			//
-			//			//UpdateNeighbours(x, z);
-			//
-			//			//std::unique_lock<std::mutex> lock(mutex);
-			//			//chunk->GenerateMeshData();
-			//		} else {
-			//			continue;
-			//		}
-			//
-			//		std::this_thread::sleep_for(std::chrono::microseconds(50));
-			//	}
-			//}
-			//
-			//std::this_thread::sleep_for(std::chrono::microseconds(50));
-			//
-			//glm::ivec2 currChunk = glm::ivec2(World::GetPlayer().GetPosition().x / 16, World::GetPlayer().GetPosition().z / 16);
-			//if(currChunk != lastChunk) {
-			//	i = -1;
-			//	lastChunk = currChunk;
-			//}
 		}
 
 		std::this_thread::sleep_for(std::chrono::microseconds(50));
@@ -207,11 +169,38 @@ void ChunkManager::Render(BaseCamera& camera) {
 	terrainTexture->BindTexture(3);
 	solidShader->SetMatrix4("projectionView", camera.ProjectionView());
 
+	// Current chunk the player is in
+	glm::ivec3 playerChunk = glm::floor(World::GetPlayer().GetPosition() / (float)Chunk::CHUNK_SIZE);
+
 	std::unordered_map<glm::ivec2, Chunk*>::iterator iter = chunks.begin();
-	for(; iter != chunks.end(); iter++) {
-		// If Chunk has no world data
-		if(!iter->second->hasWorldData)
+	for(; iter != chunks.end();) {
+		glm::ivec2 distance = glm::abs(glm::ivec2(iter->second->GetIndexPos().x - playerChunk.x, iter->second->GetIndexPos().y - playerChunk.z));
+
+		if(distance.x > DESTROY_DISTANCE || distance.y > DESTROY_DISTANCE) {
+			delete iter->second;
+			iter->second = nullptr;
+		
+			if(iter == chunks.end()) {
+				chunks.erase(iter);
+				break;
+			} else {
+				iter = chunks.erase(iter);
+			}
+		
 			continue;
+		}
+
+
+		if(distance.x >= RENDERING_DISTANCE || distance.y >= RENDERING_DISTANCE) {
+			++iter;
+			continue;
+		}
+
+		// If Chunk has no world data
+		if(!iter->second->hasWorldData) {
+			++iter;
+			continue;
+		}
 
 		// Regenerate Mesh
 		if(iter->second->isDirty)
@@ -223,6 +212,7 @@ void ChunkManager::Render(BaseCamera& camera) {
 
 		// Render Mesh
 		iter->second->Render(*solidShader);
+		++iter;
 	}
 
 	// Opaque Rendering
@@ -237,13 +227,9 @@ void ChunkManager::Render(BaseCamera& camera) {
 		if(!iter->second->hasWorldData)
 			continue;
 
-		// Regenerate Mesh
-		if(iter->second->isDirty)
-			iter->second->GenerateMeshData();
-
-		// Upload Mesh to GPU
-		if(iter->second->uploadMeshToGPU == true)
-			iter->second->CreateMesh();
+		glm::ivec2 distance = glm::abs(glm::ivec2(iter->second->GetIndexPos().x - playerChunk.x, iter->second->GetIndexPos().y - playerChunk.z));
+		if(distance.x >= RENDERING_DISTANCE || distance.y >= RENDERING_DISTANCE)
+			continue;
 
 		iter->second->RenderOpaque(*waterShader);
 	}
@@ -337,8 +323,9 @@ void ChunkManager::SetBlock(const float& x, const float& y, const float& z, cons
 Chunk* ChunkManager::FindChunk(const glm::ivec2& index) const {
 	glm::ivec2 key = index;
 
-	if(cacheChunk != nullptr && cacheChunk->localCoord == key)
-		return cacheChunk;
+	//if(cacheChunk != nullptr)
+	//	if(cacheChunk->localCoord == key)
+	//	 return cacheChunk;
 
 	auto iter = chunks.find(key);
 	return (iter != chunks.end()) ? iter->second : nullptr;
@@ -347,8 +334,9 @@ Chunk* ChunkManager::FindChunk(const glm::ivec2& index) const {
 Chunk* ChunkManager::FindChunk(const glm::vec3& worldPosition) const {
 	glm::ivec2 key = glm::ivec2(std::floor(worldPosition.x / Chunk::CHUNK_SIZE), std::floor(worldPosition.z / Chunk::CHUNK_SIZE));
 	
-	if(cacheChunk != nullptr && cacheChunk->localCoord == key)
-		return cacheChunk;
+	//if(cacheChunk != nullptr)
+	//	if(cacheChunk->localCoord == key)
+	//		return cacheChunk;
 
 	auto iter = chunks.find(key);
 	return (iter != chunks.end()) ? iter->second : nullptr;
@@ -358,8 +346,9 @@ Chunk* ChunkManager::FindChunk(const glm::vec3& worldPosition) const {
 Chunk* ChunkManager::FindChunk(const float& x, const float& z) const {
 	glm::ivec2 key = glm::ivec2(std::floor(x / Chunk::CHUNK_SIZE), std::floor(z / Chunk::CHUNK_SIZE));
 
-	if(cacheChunk != nullptr && cacheChunk->localCoord == key)
-		return cacheChunk;
+	//if(cacheChunk != nullptr)
+	//	if(cacheChunk->localCoord == key)
+	//		return cacheChunk;
 
 	auto iter = chunks.find(key);
 	return (iter != chunks.end()) ? iter->second : nullptr;

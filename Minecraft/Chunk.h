@@ -65,6 +65,8 @@ public:
 	// Returns air if the block is outside of the local position inside the chunk
 	BlockIDs GetBlockLocal(const float& x, const float& y, const float& z) const;
 
+	glm::vec2 GetIndexPos() const;
+
 	// Set Block Inside Chunk. X, Y & Z are in World Position.
 	void SetBlock(const int& x, const int& y, const int& z, const BlockIDs& block);
 	void SetBlock(const glm::vec3& worldPosition, const BlockIDs& block);
@@ -103,6 +105,7 @@ public: // private
 	void SetNeighbourDirty(NEIGHBOUR neighbour);
 	// Updates the neighbour pointers
 	void GetNeighbours();
+	void RemoveNeighbour(Chunk* neighbour);
 
 
 

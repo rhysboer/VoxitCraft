@@ -59,7 +59,8 @@ public: // Private
 	glm::ivec2 PositionToChunk(const glm::vec3& worldPosition) const;
 
 private:
-	const unsigned int RENDERING_DISTANCE = 6;
+	const unsigned int RENDERING_DISTANCE = 12;
+	const unsigned int DESTROY_DISTANCE = RENDERING_DISTANCE + 5;
 	
 	std::unordered_map<glm::ivec2, Chunk*> chunks = std::unordered_map <glm::ivec2, Chunk*>();
 	Chunk* cacheChunk = nullptr;

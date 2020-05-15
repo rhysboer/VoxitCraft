@@ -5,11 +5,34 @@ Chunk::Chunk(glm::ivec2 index, ChunkManager& world) :localCoord(index), hasWorld
 	this->chunkManager = &world;
 	worldCoord = glm::vec3(index.x * CHUNK_SIZE, 0.0f, index.y * CHUNK_SIZE);
 	
+	solidMesh.vao = 0;
+	waterMesh.vao = 0;
+
+	for(int i = 0; i < (int)NEIGHBOUR::_TOTAL; i++)
+		neighbourChunks[i] = nullptr;
+
 	solidMesh.meshData.reserve(4500);
 }
 
 Chunk::~Chunk() {
+
+	GetNeighbours();
+	for(int i = 0; i < (int)NEIGHBOUR::_TOTAL; i++)
+		if(neighbourChunks[i] != nullptr)
+			neighbourChunks[i]->RemoveNeighbour(this);
+
 	// Destroy chunk
+	if(solidMesh.vao != 0) {
+		glDeleteVertexArrays(1, &solidMesh.vao);
+		glDeleteBuffers(1, &solidMesh.vbo);
+		glDeleteBuffers(1, &solidMesh.ebo);
+	}
+
+	if(waterMesh.vao != 0) {
+ 		glDeleteVertexArrays(1, &waterMesh.vao);
+		glDeleteBuffers(1, &waterMesh.vbo);
+		glDeleteBuffers(1, &waterMesh.ebo);
+	}
 }
 
 void Chunk::Render(Shader& solidShader) {
@@ -24,7 +47,7 @@ void Chunk::Render(Shader& solidShader) {
 
 void Chunk::RenderOpaque(Shader& waterShader) {
 	// Liquids
-	if(waterMesh.indicesCount > 0) {
+	if(waterMesh.vao > 0) {
 		glBindVertexArray(waterMesh.vao);
 		waterShader.SetVector3("position", worldCoord);
 		glDrawElements(GL_TRIANGLES, waterMesh.indicesCount, GL_UNSIGNED_INT, 0);
@@ -131,6 +154,10 @@ BlockIDs Chunk::GetBlockLocal(const float& x, const float& y, const float& z) co
 	return BlockIDs::AIR;
 }
 
+glm::vec2 Chunk::GetIndexPos() const {
+	return localCoord;
+}
+
 // X, Y & Z are in local coords
 BlockIDs Chunk::GetChunkOrNeighbourBlock(const float& x, const float& y, const float& z) {
 	// If position is above or under the chunk
@@ -156,7 +183,7 @@ BlockIDs Chunk::GetChunkOrNeighbourBlock(const float& x, const float& y, const f
 	if(neighbourChunks[(int)neighbour] == nullptr)
 		return BlockIDs::AIR;
 	
-	return neighbourChunks[(int)neighbour]->GetBlockLocal(Math::Modulo(x, CHUNK_SIZE), y, Math::Modulo(z, CHUNK_SIZE) );
+	return neighbourChunks[(int)neighbour]->GetBlockLocal(Math::Modulo(x, CHUNK_SIZE), y, Math::Modulo(z, CHUNK_SIZE));
 
 	/*
 	// If Righthand side of chunk
@@ -236,6 +263,15 @@ void Chunk::GetNeighbours() {
 	}
 }
 
+void Chunk::RemoveNeighbour(Chunk* neighbour) {
+	for(int i = 0; i < (int)NEIGHBOUR::_TOTAL; i++) {
+		if(neighbourChunks[i] == neighbour) {
+			neighbourChunks[i] = nullptr;
+			return;
+		}
+	}
+}
+
 void Chunk::GetFaceNeighbours(const glm::ivec3& faceDirection, const glm::vec3& origin_local, std::array<int, 4>& blocks) {
 	glm::vec3 offsets[9];
 
@@ -289,10 +325,6 @@ void Chunk::GetFaceNeighbours(const glm::ivec3& faceDirection, const glm::vec3& 
 		3 = 6, 7, 0
 	*/
 	
-	if(origin_local.x == 15 && origin_local.z == 15) {
-		printf("brekpoint\n");
-	}
-	
 	glm::vec3 pos;
 	for(int i = 0; i < 4; i++) {
 		int index = i * 2;
@@ -308,8 +340,9 @@ void Chunk::GetFaceNeighbours(const glm::ivec3& faceDirection, const glm::vec3& 
 void Chunk::SetNeighbourDirty(NEIGHBOUR neighbour) {
 	int index = (int)neighbour;
 
-	if(neighbourChunks[index] == nullptr)
+	if(neighbourChunks[index] == nullptr) { 
 		neighbourChunks[index] = chunkManager->FindChunk(localCoord + neighbourOffsets[index]);
+	}
 
 	if(neighbourChunks[index] != nullptr)
 		neighbourChunks[index]->SetDirty();
@@ -368,8 +401,12 @@ bool Chunk::NeighbourSlices(const unsigned int& y) {
 
 	// Check Neighbours
 	for(int i = 0; i < 4; i++) {
-		if(neighbourChunks[i] == nullptr)
+		
+
+		// CHANGE THIS SHIT
+		if(neighbourChunks[i] == nullptr) {
 			neighbourChunks[i] = chunkManager->FindChunk(localCoord + neighbourOffsets[i]);
+		}
 	
 		Chunk* chunk = neighbourChunks[i];
 		if(chunk != nullptr) {
@@ -414,10 +451,10 @@ void Chunk::GenerateMeshData() {
 	// Update Neighbour Pointers
 	GetNeighbours();
 
-	for(int i = 0; i < (int)NEIGHBOUR::_TOTAL; i++) {
-		if(neighbourChunks[i] == nullptr)
-			return;
-	}
+	//for(int i = 0; i < (int)NEIGHBOUR::_TOTAL; i++) {
+	//	if(neighbourChunks[i] == nullptr)
+	//		return;
+	//}
 
 
 	// Vertex Offset
@@ -446,10 +483,6 @@ void Chunk::GenerateMeshData() {
 
 	// Timer
 	std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-
-	if(localCoord.x == -1 && localCoord.y == 0) {
-		printf("breakpoint");
-	}
 
 	for(int y = 0; y < highestBlock + 1; y++) {
 		if(NeighbourSlices(y))
