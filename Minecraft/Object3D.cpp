@@ -46,7 +46,13 @@ Object3D::Object3D(const glm::vec3& position, const std::vector<float>& vertex_d
 }
 
 Object3D::~Object3D() {
-	// TODO: Delete object data
+	if(object.VAO != 0) {
+		glDeleteVertexArrays(1, &object.VAO);
+		glDeleteBuffers(1, &object.VBO);
+	
+		if(object.EBO != 0)
+			glDeleteBuffers(1, &object.EBO);
+	}
 }
 
 #pragma region Primitives

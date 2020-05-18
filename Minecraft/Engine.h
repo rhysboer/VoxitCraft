@@ -4,7 +4,6 @@
 #include "glm/glm.hpp"
 #include "Input.h"
 #include "Time.h"
-#include "ShaderManager.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -41,7 +40,6 @@ protected:
 	glm::vec3 colourBackground;
 private:
 	
-	void Init();
 	void InitCallbacks();
 
 	bool isInitialized;

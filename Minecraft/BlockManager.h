@@ -69,7 +69,7 @@ public:
 
 	static void LoadBlockDatabase();
 
-	static const BlockData& GetBlockData(const BlockIDs& id);
+	static const BlockData const* GetBlockData(const BlockIDs& id);
 	static int TotalBlocks();
 
 private:

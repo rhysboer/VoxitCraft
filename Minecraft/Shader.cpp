@@ -5,6 +5,8 @@ Shader::Shader() {
 }
 
 Shader::~Shader() {
+	if(shaderProgram != 0)
+		glDeleteProgram(shaderProgram);
 }
 
 bool Shader::LoadShader(std::string vertSource, std::string fragSource, std::string geomShader) {
@@ -124,6 +126,17 @@ void Shader::SetMatrix4(const char* name, const glm::mat4& value) {
 		return;
 	}
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(value));
+}
+
+void Shader::SetMatrix3(const char* name, const glm::mat3& value) {
+	UseProgram();
+
+	unsigned int loc = glGetUniformLocation(shaderProgram, name);
+	if(loc == -1) {
+		printf("Error finding Mat4 Uniform: %s\n", name);
+		return;
+	}
+	glUniformMatrix3fv(loc, 1, GL_FALSE, glm::value_ptr(value));
 }
 
 void Shader::SetVector2(const char* name, const glm::vec2& value) {

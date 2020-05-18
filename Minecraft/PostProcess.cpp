@@ -32,6 +32,9 @@ PostProcess::PostProcess(const char* shaderName, const float& sizeX, const float
 }
 
 PostProcess::~PostProcess() {
+	glDeleteVertexArrays(1, &vao);
+	glDeleteBuffers(1, &vbo);
+
 	delete framebuffer;
 }
 

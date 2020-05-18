@@ -16,8 +16,10 @@ World::World() {
 }
 
 World::~World() {
-	//delete chunkManager;
-	//delete skybox;
+	delete skybox;
+	delete chunkManager;
+
+	delete player;
 }
 
 void World::Update() {

@@ -14,7 +14,7 @@ public:
 	};
 
 	static void InitShaders();
-	static void DestroyShaders(); // TODO
+	static void DestroyShaders();
 	
 	static Shader* AddShader(const char* fileNames, ShaderType type = ShaderType::GRAPHIC);
 	static Shader* GetShader(const char* name, ShaderType type = ShaderType::GRAPHIC);

@@ -7,6 +7,22 @@ void ShaderManager::InitShaders() {
 	AddShader("default");
 }
 
+void ShaderManager::DestroyShaders() {
+	// Destroy Graphic Shaders
+	std::map<const char*, Shader*>::iterator iter = graphicShaders.begin();
+	for(; iter != graphicShaders.end(); iter++) {
+		delete iter->second;
+		iter->second = nullptr;
+	}
+
+	// Destroy Compute Shaders
+	iter = computeShaders.begin();
+	for(; iter != computeShaders.end(); iter++) {
+		delete iter->second;
+		iter->second = nullptr;
+	}
+}
+
 Shader* ShaderManager::GetShader(const char* name, ShaderType type) {
 	if(type == ShaderType::GRAPHIC || type == ShaderType::GRAPHIC_AND_GEOMETRY) {
 		std::map<const char*, Shader*>::iterator iter = graphicShaders.find(name);

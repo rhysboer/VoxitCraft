@@ -7,6 +7,12 @@ void _CallbackFrameBufferResize(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
+Engine::Engine() {
+	this->isInitialized = false;
+	this->window = nullptr;
+	this->colourBackground = glm::vec3(0.0f);
+}
+
 bool Engine::CreateEngine(const char* title, const int& width, const int& height) {
 	if(!glfwInit())
 		return false;
@@ -24,7 +30,6 @@ bool Engine::CreateEngine(const char* title, const int& width, const int& height
 
 	glfwMakeContextCurrent(this->window);
 	
-
 	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		glfwTerminate();
 		return false;
@@ -52,8 +57,6 @@ void Engine::Run() {
 	glEnable(GL_BLEND); // Transperent Blend
 	glDepthFunc(GL_LEQUAL);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	Init();
 
 	// Call On Start
 	OnStart();
@@ -107,23 +110,10 @@ GLFWwindow& Engine::GetWindow() {
 	return *window;
 }
 
-
-// Private Functions
-
-Engine::Engine() {
-	this->isInitialized = false;
-	this->window = nullptr;
-	this->colourBackground = glm::vec3(0.0f);
-}
-
 glm::ivec2 Engine::WindowSize() const {
 	glm::ivec2 size;
 	glfwGetWindowSize(this->window, &size.x, &size.y);
 	return size;
-}
-
-void Engine::Init() {
-	ShaderManager::InitShaders();
 }
 
 void Engine::InitCallbacks() {

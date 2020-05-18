@@ -8,6 +8,9 @@ WorldGeneration::WorldGeneration(unsigned int heightMapSeed, unsigned int moistu
 }
 
 WorldGeneration::~WorldGeneration() {
+	delete field;
+	delete desert;
+	delete snow;
 }
 
 void WorldGeneration::CreateChunkWorldData(Chunk& chunk) {

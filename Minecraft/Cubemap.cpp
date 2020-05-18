@@ -5,6 +5,10 @@ Cubemap::Cubemap(const char* path) {
 	LoadCubemap(path);
 }
 
+Cubemap::~Cubemap() {
+	glDeleteTextures(1, &texture);
+}
+
 void Cubemap::BindTexture(const unsigned int& index) const {
 	glActiveTexture(GL_TEXTURE0 + index);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, texture);

@@ -56,10 +56,8 @@ public: // Private
 	Chunk* FindChunk(const glm::vec3& worldPosition) const;
 	Chunk* FindChunk(const float& x, const float& z) const;
 
-	glm::ivec2 PositionToChunk(const glm::vec3& worldPosition) const;
-
 private:
-	const unsigned int RENDERING_DISTANCE = 12;
+	const unsigned int RENDERING_DISTANCE = 24;
 	const unsigned int DESTROY_DISTANCE = RENDERING_DISTANCE + 5;
 	
 	std::unordered_map<glm::ivec2, Chunk*> chunks = std::unordered_map <glm::ivec2, Chunk*>();
@@ -73,12 +71,14 @@ private:
 
 	glm::vec3 position = glm::vec3(0);
 
-	// TESTING
+	// Multithreading
 	std::mutex mutex;
-	std::thread thread;
-	bool ending = false;
+	std::thread* chunkGenerationThread;
+	bool appEnding = false;
 
-	bool START = false;
+	std::array<BlockIDs, Chunk::CHUNK_MASS> data = std::array<BlockIDs, Chunk::CHUNK_MASS>();
+	std::vector<BlockIDs> structureBlocks = std::vector<BlockIDs>();
+	std::vector<glm::vec3> structurePos = std::vector<glm::vec3>();
 };
 
 

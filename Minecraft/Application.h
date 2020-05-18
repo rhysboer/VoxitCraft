@@ -35,21 +35,24 @@ private:
 	
 	static Application* app;
 	
+	// Post processing and framebuffer
 	PostProcessEffect effect;
 	PostProcess* postProcessing;
 	Framebuffer* framebuffer;
 	
-	// Test
+	// Held Block Preview
 	Framebuffer* blockBuffer;
+	Object3D* selectedBlock;
 	BaseCamera* camera2D;
-	Object3D* cube;
+
+	// Block Highlighting
 	Object3D* blockHighlight;
 	int currentBlock;
 
+	// World
 	World* world;
 
 	glm::vec2 lastResolution;
 	bool lockCursor = true;
-	bool isWireFrame = false;
 };
 

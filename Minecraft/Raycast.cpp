@@ -9,6 +9,9 @@ Ray::RayHit Ray::RaycastFromCamera(const float& distance, BaseCamera& camera) {
 	glm::vec2 screenSize = Engine::GetWindowSize();
 	glm::vec2 mousePos = screenSize / 2.0f; 
 
+	if(screenSize.x == 0 || screenSize.y == 0)
+		return Ray::RayHit(BlockIDs::AIR, glm::vec3(0), BlockIDs::AIR, glm::vec3(0), false);
+
 	// Normalized Device Space
 	glm::vec2 mouseNDS = glm::vec2((2.0f * mousePos.x) / screenSize.x - 1.0f, 1.0f - (2.0f * mousePos.y) / screenSize.y);
 

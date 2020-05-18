@@ -17,6 +17,9 @@ EntityPlayer::EntityPlayer(const glm::vec3& position) : Entity(position) {
 EntityPlayer::~EntityPlayer() {
 	delete camera;
 	camera = nullptr;
+
+	delete camera;
+	delete crosshair;
 }
 
 void EntityPlayer::OnUpdate() {

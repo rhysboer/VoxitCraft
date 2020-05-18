@@ -7,135 +7,85 @@ ChunkManager::ChunkManager() {
 
 	solidShader->SetInt("texture1", 3);
 	waterShader->SetInt("texture1", 0);
-
+	
 	terrainTexture = new TileMap("./data/textures/tileset.png", 8, 8);
 	waterTexture = new TileMap("./data/textures/water.png", 16, 1);
 
-	thread = std::thread(&ChunkManager::ChunkLoader, this);
+	chunkGenerationThread = new std::thread(&ChunkManager::ChunkLoader, this);
+
+	printf("Size of Chunk: %llu\n", sizeof(Chunk));
 
 	// TODO: Implement a loading wait
 	std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
 ChunkManager::~ChunkManager() {
-	delete solidShader;
+	if(chunkGenerationThread != nullptr) {
+		appEnding = true;
+		chunkGenerationThread->join();
+
+		delete chunkGenerationThread;
+	}
+
 	delete terrainTexture;
+	delete waterTexture;
 
-	ending = true;
-	thread.join();
-}
+	std::unordered_map<glm::ivec2, Chunk*>::iterator iter = chunks.begin();
+	for(; iter != chunks.end();) {
+		if(iter->second != nullptr) {
+			delete iter->second;
+			iter->second = nullptr;
 
-// MULTITHREAD TEST
-void ChunkManager::ChunkLoader() {
-	glm::ivec2 lastChunk = glm::ivec2(0);
-
-	const glm::ivec2 offset[8] = { glm::ivec2(-1, 0), glm::ivec2(0, 1), glm::ivec2(1, 0), glm::ivec2(0, -1),  /*SIDES*/ glm::ivec2(-1, -1), glm::ivec2(1, -1), glm::ivec2(-1, 1), glm::ivec2(1, 1) };
-
-	/*
-	Plan A:
-		1. If a chunk doesnt exist in this location, create one and lock it
-		2. If chunk does NOT have worldData, create it.
-			2-A. If a tree leaves are inside another chunk and said chunk doesnt exist, create it blankly.
-		3. If chunk didnt exist, add it to the chunk list.
-	
-		Rendering: If chunk is dirty, lock it, recreate mesh and apply it. Continue
-		Placing: Add block and make chunk dirty
-
-	Plan B:
-		1. If a chunk doesnt exist in this location, create one and add it to the list
-		2. If chunk does NOT have worldData, Create world data and store it all into a buffer.
-			2-A. If a tree leaves are inside another chunk, create that chunk and add it to the chunk list.
-		3. After world data is created, lock it and add it all to the chunk.
-
-		Rendering: If chunk is dirty, lock it, recreate mesh and apply it. Continue
-		Placing: Add block and make chunk dirty
-
-	Plan C:
-		1. If a chunk doesnt exist in this location, create it
-		2. If chunk does NOT have worldData, create it and set it.
-		3. Before building mesh create world data for surrounding chunks
-	*/
-
-
-	// Lamdba - Update all neighbours around chunk
-	auto UpdateNeighbours = [this](const int& x, const int& z) {
-		std::unique_lock<std::mutex> lock(mutex);
-		lock.unlock();
-
-		for(int innerZ = -1; innerZ <= 1; innerZ++) {
-			for(int innerX = -1; innerX <= 1; innerX++) {
-				if(innerZ == 0 && innerX == 0)
-					continue;
-
-				Chunk* neighbour = CreateChunk(glm::ivec2(x + innerX, z + innerZ));
-				if(!neighbour->hasWorldData) {
-					lock.lock();
-					worldGen.CreateChunkWorldData(*neighbour);
-					lock.unlock();
-					std::this_thread::sleep_for(std::chrono::microseconds(5));
-				}
+			if(iter == chunks.end()) {
+				chunks.erase(iter);
+				break;
+			} else {
+				iter = chunks.erase(iter);
 			}
 		}
-	};
+	}
+}
 
-	std::array<BlockIDs, Chunk::CHUNK_MASS> data = std::array<BlockIDs, Chunk::CHUNK_MASS>();
-	std::vector<BlockIDs> structureBlocks = std::vector<BlockIDs>();
-	std::vector<glm::vec3> structurePos = std::vector<glm::vec3>();
-
-	while(ending == false) {
+void ChunkManager::ChunkLoader() {
+	glm::ivec2 lastChunk = glm::ivec2(0);
+	
+	const glm::ivec2 offset[8] = { glm::ivec2(-1, 0), glm::ivec2(0, 1), glm::ivec2(1, 0), glm::ivec2(0, -1), glm::ivec2(-1, -1), glm::ivec2(1, -1), glm::ivec2(-1, 1), glm::ivec2(1, 1) };
+	
+	std::unique_lock<std::mutex> lock(mutex);
+	lock.unlock();
+	
+	while(appEnding == false) {
 		for(int i = 0; i <= RENDERING_DISTANCE; i++) {
 			int minX = lastChunk.x + -i;
 			int maxX = lastChunk.x + i;
 			int minZ = lastChunk.y + -i;
 			int maxZ = lastChunk.y + i;
-
+	
 			for(int z = minZ; z <= maxZ; z++) {
 				for(int x = minX; x <= maxX; x++) {
 					Chunk* chunk = CreateChunk(glm::ivec2(x, z));
 			
 					if(!chunk->hasWorldData) {
-						std::unique_lock<std::mutex> lock(mutex);
-						lock.unlock();
-
-						// Create Neighbours
-						//for(int j = 0; j < 8; j++) {
-						//	Chunk* neighbour = CreateChunk(glm::ivec2(x + offset[j].x, z + offset[j].y));
-						//
-						//	if(!neighbour->hasWorldData) {
-						//		data.fill(BlockIDs::AIR);
-						//		structurePos.clear();
-						//		structureBlocks.clear();
-						//
-						//		int height = worldGen.CreateChunkWorldData(*neighbour, data, structurePos, structureBlocks);
-						//
-						//		lock.lock();
-						//		SetBlocks(structurePos, structureBlocks);
-						//		neighbour->SetWorldData(data, height);
-						//		lock.unlock();
-						//	}
-						//}
-
 						data.fill(BlockIDs::AIR);
 						structurePos.clear();
 						structureBlocks.clear();
-
+	
 						// Generate World Data
 						int height = worldGen.CreateChunkWorldData(*chunk, data, structurePos, structureBlocks);
 						if(height == 0)
 							continue;
-
+	
+						lock.lock();
+						
 						// Add neighbouring structure overhangs
 						SetBlocks(structurePos, structureBlocks);
-
-						// Lock chunk
-						//std::unique_lock<std::mutex> lock(mutex);
-						lock.lock();
 						// Set world data
 						chunk->SetWorldData(data, height);
 						// Generate Mesh
 						chunk->GenerateMeshData();
 			
 						lock.unlock();
+	
 						std::this_thread::sleep_for(std::chrono::microseconds(50));
 					}
 				}
@@ -146,20 +96,23 @@ void ChunkManager::ChunkLoader() {
  				i = -1;
 				lastChunk = currChunk;
 			}
-
+	
+			if(appEnding == true)
+				break;
+	
 			std::this_thread::sleep_for(std::chrono::microseconds(50));
 		}
-
+	
 		std::this_thread::sleep_for(std::chrono::microseconds(50));
 	}
-
+	
 }
 
 void ChunkManager::Update() {
-	ImGui::Begin("TOTAL TIME");
-	ImGui::Text("Average Mesh Data Gen Time: %f", DELETTHIS::GetAverage2());
-	ImGui::Text("Average Mesh To GPU Time: %f", DELETTHIS::GetAverage());
-	ImGui::End();
+	//ImGui::Begin("TOTAL TIME");
+	//ImGui::Text("Average Mesh Data Gen Time: %f", DELETTHIS::GetAverage2());
+	//ImGui::Text("Average Mesh To GPU Time: %f", DELETTHIS::GetAverage());
+	//ImGui::End();
 }
 
 void ChunkManager::Render(BaseCamera& camera) {
@@ -297,7 +250,7 @@ void ChunkManager::GetSolidBlocksInArea(const glm::vec3& worldPosition, const gl
 	for(int x = xMin; x <= xMax; x++) {
 		for(int y = yMin; y <= yMax; y++) {
 			for(int z = zMin; z <= zMax; z++) {
-				if(BlockManager::GetBlockData(GetBlock(x, y, z)).isSolid == true) {
+				if(BlockManager::GetBlockData(GetBlock(x, y, z))->isSolid == true) {
 					output.emplace_back(x, y, z);
 				}
 			}
@@ -315,17 +268,11 @@ void ChunkManager::SetBlock(const float& x, const float& y, const float& z, cons
 		chunk = CreateChunk(glm::ivec2(std::floor(x / Chunk::CHUNK_SIZE), std::floor(z / Chunk::CHUNK_SIZE)));
 
 	chunk->SetBlock(x, y, z, block);
-	//chunk->GenerateMeshData();
-
-	cacheChunk = chunk;
 }
 
 Chunk* ChunkManager::FindChunk(const glm::ivec2& index) const {
+	
 	glm::ivec2 key = index;
-
-	//if(cacheChunk != nullptr)
-	//	if(cacheChunk->localCoord == key)
-	//	 return cacheChunk;
 
 	auto iter = chunks.find(key);
 	return (iter != chunks.end()) ? iter->second : nullptr;
@@ -333,10 +280,6 @@ Chunk* ChunkManager::FindChunk(const glm::ivec2& index) const {
 
 Chunk* ChunkManager::FindChunk(const glm::vec3& worldPosition) const {
 	glm::ivec2 key = glm::ivec2(std::floor(worldPosition.x / Chunk::CHUNK_SIZE), std::floor(worldPosition.z / Chunk::CHUNK_SIZE));
-	
-	//if(cacheChunk != nullptr)
-	//	if(cacheChunk->localCoord == key)
-	//		return cacheChunk;
 
 	auto iter = chunks.find(key);
 	return (iter != chunks.end()) ? iter->second : nullptr;
@@ -345,10 +288,6 @@ Chunk* ChunkManager::FindChunk(const glm::vec3& worldPosition) const {
 // Returns nullptr if chunk doesn't exists, X & Z are worldPosition
 Chunk* ChunkManager::FindChunk(const float& x, const float& z) const {
 	glm::ivec2 key = glm::ivec2(std::floor(x / Chunk::CHUNK_SIZE), std::floor(z / Chunk::CHUNK_SIZE));
-
-	//if(cacheChunk != nullptr)
-	//	if(cacheChunk->localCoord == key)
-	//		return cacheChunk;
 
 	auto iter = chunks.find(key);
 	return (iter != chunks.end()) ? iter->second : nullptr;

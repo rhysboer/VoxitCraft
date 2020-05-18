@@ -8,8 +8,8 @@ BlockManager::BlockManager() {
 BlockManager::~BlockManager() {
 }
 
-const BlockData& BlockManager::GetBlockData(const BlockIDs& id) {
-	return blocks[(int)id];
+const BlockData const * BlockManager::GetBlockData(const BlockIDs& id) {
+	return &blocks[(int)id];
 }
 
 int BlockManager::TotalBlocks() {
