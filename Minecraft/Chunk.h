@@ -5,15 +5,11 @@
 #include "BlockManager.h"
 #include "Shader.h"
 #include "Util.h"
+#include "AABB.h"
 
 #include <chrono>
 
-
-enum class STATE {
-	DIRTY,
-	UPDATE_MESH,
-	IDLE
-};
+class ChunkManager;
 
 struct MeshData {
 	std::vector<float> meshData = std::vector<float>();
@@ -30,8 +26,6 @@ struct MeshData {
 		indices.clear();
 	}
 };
-
-class ChunkManager;
 
 class Chunk {
 private:
@@ -58,6 +52,8 @@ public:
 	Chunk(glm::ivec2 index, ChunkManager& world);
 	~Chunk();
 
+	// --------- GET CHUNKS BLOCK
+
 	// Returns the block at position, X, Y & Z are in World Position.
 	BlockIDs GetBlock(const float& x, const float& y, const float& z) const;
 	BlockIDs GetBlock(const glm::vec3& worldPosition) const;
@@ -65,11 +61,13 @@ public:
 	// Returns air if the block is outside of the local position inside the chunk
 	BlockIDs GetBlockLocal(const float& x, const float& y, const float& z) const;
 
-	glm::vec2 GetIndexPos() const;
+	glm::vec2 GetLocalCoords() const;
 
 	// Set Block Inside Chunk. X, Y & Z are in World Position.
 	void SetBlock(const int& x, const int& y, const int& z, const BlockIDs& block);
 	void SetBlock(const glm::vec3& worldPosition, const BlockIDs& block);
+
+	AABB const* GetAABB() const;
 
 	friend class ChunkManager;
 	friend class WorldGeneration;
@@ -82,7 +80,6 @@ public: // private
 	void GenerateMeshData(); // Create mesh data for the chunk to make into a mesh
 	void CreateMesh(); // Turn mesh data into a mesh
 	
-	void OnTick();
 	void Render(Shader& solidShader);
 	void RenderOpaque(Shader& waterShader);
 
@@ -131,6 +128,7 @@ public: // Private
 	bool isDirty; // Is chunk dirty, needs to regenerate mesh data
 	bool uploadMeshToGPU; // Does chunk need to upload its data to the gpu
 	bool hasWorldData; // Has generated world data
+	AABB* aabb; // Used for frustum culling chunk
 
 	/*
 		LEFT, // X-

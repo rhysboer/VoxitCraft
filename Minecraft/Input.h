@@ -27,6 +27,7 @@ public:
 	static double GetMouseScroll(Scroll direction = Scroll::VERTICAL);
 
 	static void DisableCursor(const bool& disable);
+	static bool IsCursorDisabled();
 
 protected:
 	static void SetCallbacks(GLFWwindow* window);

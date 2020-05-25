@@ -68,6 +68,10 @@ void Input::DisableCursor(const bool& hideCursor) {
 	}
 }
 
+bool Input::IsCursorDisabled() {
+	return (glfwGetInputMode(&Engine::GetWindow(), GLFW_CURSOR) == GLFW_CURSOR_NORMAL) ? false : true;
+}
+
 void Input::SetCallbacks(GLFWwindow* window) {
 	glfwSetKeyCallback(window, KeyCallback);
 	glfwSetMouseButtonCallback(window, MouseButtonCallback);

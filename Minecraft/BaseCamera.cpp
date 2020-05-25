@@ -10,7 +10,7 @@ BaseCamera::BaseCamera(const glm::vec3& _position, const glm::vec3& _worldUp, co
 void BaseCamera::UpdateCamera() {
 
 	glm::vec3 temp = glm::vec3(0.0f);
-	temp.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	temp.x = cos(glm::radians(yaw))* cos(glm::radians(pitch));
 	temp.y = sin(glm::radians(pitch));
 	temp.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 	forward = glm::normalize(temp);
@@ -22,7 +22,126 @@ void BaseCamera::UpdateCamera() {
 
 	projection = CreateProjectionMatrix(); 
 
+	// Update the cameras frustum planes
+	UpdateFrustumPlanes();
+
 	isDirty = false;
+}
+
+void BaseCamera::UpdateFrustumPlanes() {
+	glm::mat4 projView = projection * view;
+
+	// right side
+	frustumPlanes[0] = glm::vec4(projView[0][3] - projView[0][0],
+								 projView[1][3] - projView[1][0],
+								 projView[2][3] - projView[2][0],
+								 projView[3][3] - projView[3][0]);
+
+	// left side
+	frustumPlanes[1] = glm::vec4(projView[0][3] + projView[0][0],
+								 projView[1][3] + projView[1][0],
+								 projView[2][3] + projView[2][0],
+								 projView[3][3] + projView[3][0]);
+								 
+	// top
+	frustumPlanes[2] = glm::vec4(projView[0][3] - projView[0][1],
+								 projView[1][3] - projView[1][1],
+								 projView[2][3] - projView[2][1],
+								 projView[3][3] - projView[3][1]);
+
+	// bottom
+	frustumPlanes[3] = glm::vec4(projView[0][3] + projView[0][1],
+								 projView[1][3] + projView[1][1],
+								 projView[2][3] + projView[2][1],
+								 projView[3][3] + projView[3][1]);
+
+	// far
+	frustumPlanes[4] = glm::vec4(projView[0][3] - projView[0][2],
+								 projView[1][3] - projView[1][2],
+								 projView[2][3] - projView[2][2],
+								 projView[3][3] - projView[3][2]);
+
+	// near
+	frustumPlanes[5] = glm::vec4(projView[0][3] + projView[0][2],
+								 projView[1][3] + projView[1][2],
+								 projView[2][3] + projView[2][2],
+								 projView[3][3] + projView[3][2]);
+
+	// plane normalisation, based on length of normal
+	for(int i = 0; i < FRUSTUM_FACES; i++) {
+		frustumPlanes[i] /= glm::length(glm::vec3(frustumPlanes[i]));
+	}
+}
+
+bool BaseCamera::IsPointInFrustum(const glm::vec3& point) {
+	DIRTY_CHECK;
+
+	for(int i = 0; i < FRUSTUM_FACES; i++) {
+		if(glm::dot(glm::vec3(frustumPlanes[i]), point) + frustumPlanes[i].w < 0.0f)
+			return false;
+	}
+
+	return true;
+}
+
+bool BaseCamera::IsAABBInFrustum(const AABB& aabb) {
+	DIRTY_CHECK;
+
+	int out = 0;
+	int in = 0;
+
+	for(int i = 0; i < FRUSTUM_FACES; i++) {
+
+		out = 0;
+		in = 0;
+
+		for(int v = 0; v < 8; v++) {
+			if(glm::dot(glm::vec3(frustumPlanes[i]), aabb.GetPoint(v)) + frustumPlanes[i].w < 0.0f) {
+				out++;
+			} else {
+				in++;
+			}
+		}
+
+		if(in == 0)
+			return false;
+	}
+
+	return true;
+}
+
+
+//bool BaseCamera::IsAABBInFrustum(glm::vec3 point) {
+//	DIRTY_CHECK;
+//
+//	for(int i = 0; i < 6; i++) {
+//		if(glm::dot(glm::vec3(frustumPlanes[i]), point) + frustumPlanes[i].w < 0.0f) {
+//			return false;
+//		}
+//	}
+//
+//	return true;
+//}
+
+
+BaseCamera::BaseCamera(const BaseCamera& camera) {
+	for(int i = 0; i < 6; i++)
+		this->frustumPlanes[i] = camera.frustumPlanes[i];
+
+	this->view = camera.view;
+	this->projection = camera.projection;
+	this->position = camera.position;
+	this->forward = camera.forward;
+	this->up = camera.up;
+	this->right = camera.right;
+	this->worldUp = camera.worldUp;
+
+	this->yaw = camera.yaw;
+	this->pitch = camera.pitch;
+	this->fov = camera.fov;
+	this->near = camera.near;	
+	this->far = camera.far;
+	this->isDirty = camera.isDirty;
 }
 
 void BaseCamera::Rotate(const float& x, const float& y, const float& strength) {

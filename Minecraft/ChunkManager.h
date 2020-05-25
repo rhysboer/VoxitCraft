@@ -7,8 +7,9 @@
 #include "glm/gtx/hash.hpp"
 #include "ShaderManager.h"
 #include "WorldGeneration.h"
-#include "BaseCamera.h"
+#include "Camera3D.h"
 #include "Chunk.h"
+#include "Object3D.h"
 
 #include "TileMap.h"
 
@@ -26,8 +27,8 @@ public:
 	void Render(BaseCamera& camera);
 
 	// Returns a block in the world, will return AIR if bad position. X, Y & Z are in World Position.
-	BlockIDs GetBlock(const float& x, const float& y, const float& z) const;
-	BlockIDs GetBlock(const glm::vec3& worldPosition) const;
+	BlockIDs GetBlock(const float& x, const float& y, const float& z);
+	BlockIDs GetBlock(const glm::vec3& worldPosition);
 
 	// Returns blocks inside area that are solid
 	void GetSolidBlocksInArea(const glm::vec3& worldPosition, const glm::vec3& size, std::vector<glm::vec3>& output);
@@ -52,14 +53,17 @@ public: // Private
 	Chunk* CreateChunk(const glm::ivec2& index);
 	
 	// Returns the chunk, otherwise returns nullptr;
-	Chunk* FindChunk(const glm::ivec2& index) const;
-	Chunk* FindChunk(const glm::vec3& worldPosition) const;
-	Chunk* FindChunk(const float& x, const float& z) const;
+	Chunk* FindChunk(const glm::ivec2& index);
+	Chunk* FindChunk(const glm::vec3& worldPosition);
+	Chunk* FindChunk(const float& x, const float& z);
 
 private:
-	const unsigned int RENDERING_DISTANCE = 24;
-	const unsigned int DESTROY_DISTANCE = RENDERING_DISTANCE + 5;
+	unsigned int RENDERING_DISTANCE = 12;
+	unsigned int DESTROY_DISTANCE = RENDERING_DISTANCE + 5;
 	
+	// Find a chunk that locks the mutex
+	Chunk* FindChunkLock(const glm::ivec2& index);
+
 	std::unordered_map<glm::ivec2, Chunk*> chunks = std::unordered_map <glm::ivec2, Chunk*>();
 	Chunk* cacheChunk = nullptr;
 
@@ -68,8 +72,6 @@ private:
 
 	Shader* solidShader;
 	Shader* waterShader;
-
-	glm::vec3 position = glm::vec3(0);
 
 	// Multithreading
 	std::mutex mutex;

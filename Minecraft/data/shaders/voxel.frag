@@ -29,5 +29,5 @@ void main()
 		discard;
 
 	float ambient = (_ambient + 1.0) / 4.0; 
-	FragColor = vec4(texel.rgb * GetLight(_normals), texel.a);
+	FragColor = vec4(texel.rgb * GetLight(_normals) * ambient, texel.a);
 }

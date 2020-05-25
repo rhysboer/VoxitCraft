@@ -13,8 +13,6 @@ ChunkManager::ChunkManager() {
 
 	chunkGenerationThread = new std::thread(&ChunkManager::ChunkLoader, this);
 
-	printf("Size of Chunk: %llu\n", sizeof(Chunk));
-
 	// TODO: Implement a loading wait
 	std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
@@ -49,7 +47,7 @@ ChunkManager::~ChunkManager() {
 void ChunkManager::ChunkLoader() {
 	glm::ivec2 lastChunk = glm::ivec2(0);
 	
-	const glm::ivec2 offset[8] = { glm::ivec2(-1, 0), glm::ivec2(0, 1), glm::ivec2(1, 0), glm::ivec2(0, -1), glm::ivec2(-1, -1), glm::ivec2(1, -1), glm::ivec2(-1, 1), glm::ivec2(1, 1) };
+	//const glm::ivec2 offset[8] = { glm::ivec2(-1, 0), glm::ivec2(0, 1), glm::ivec2(1, 0), glm::ivec2(0, -1), glm::ivec2(-1, -1), glm::ivec2(1, -1), glm::ivec2(-1, 1), glm::ivec2(1, 1) };
 	
 	std::unique_lock<std::mutex> lock(mutex);
 	lock.unlock();
@@ -63,6 +61,8 @@ void ChunkManager::ChunkLoader() {
 	
 			for(int z = minZ; z <= maxZ; z++) {
 				for(int x = minX; x <= maxX; x++) {
+
+					// Thread Safety
 					Chunk* chunk = CreateChunk(glm::ivec2(x, z));
 			
 					if(!chunk->hasWorldData) {
@@ -75,16 +75,20 @@ void ChunkManager::ChunkLoader() {
 						if(height == 0)
 							continue;
 	
-						lock.lock();
 						
 						// Add neighbouring structure overhangs
 						SetBlocks(structurePos, structureBlocks);
-						// Set world data
-						chunk->SetWorldData(data, height);
-						// Generate Mesh
-						chunk->GenerateMeshData();
-			
+
+
+						lock.lock();
+						{
+							// Set Chunk world data
+							chunk->SetWorldData(data, height);
+							// Generate Mesh
+							chunk->GenerateMeshData();
+						}
 						lock.unlock();
+
 	
 						std::this_thread::sleep_for(std::chrono::microseconds(50));
 					}
@@ -109,10 +113,6 @@ void ChunkManager::ChunkLoader() {
 }
 
 void ChunkManager::Update() {
-	//ImGui::Begin("TOTAL TIME");
-	//ImGui::Text("Average Mesh Data Gen Time: %f", DELETTHIS::GetAverage2());
-	//ImGui::Text("Average Mesh To GPU Time: %f", DELETTHIS::GetAverage());
-	//ImGui::End();
 }
 
 void ChunkManager::Render(BaseCamera& camera) {
@@ -122,13 +122,16 @@ void ChunkManager::Render(BaseCamera& camera) {
 	terrainTexture->BindTexture(3);
 	solidShader->SetMatrix4("projectionView", camera.ProjectionView());
 
+	int renderCount = 0;
+
 	// Current chunk the player is in
 	glm::ivec3 playerChunk = glm::floor(World::GetPlayer().GetPosition() / (float)Chunk::CHUNK_SIZE);
 
 	std::unordered_map<glm::ivec2, Chunk*>::iterator iter = chunks.begin();
 	for(; iter != chunks.end();) {
-		glm::ivec2 distance = glm::abs(glm::ivec2(iter->second->GetIndexPos().x - playerChunk.x, iter->second->GetIndexPos().y - playerChunk.z));
+		glm::ivec2 distance = glm::abs(glm::ivec2(iter->second->GetLocalCoords().x - playerChunk.x, iter->second->GetLocalCoords().y - playerChunk.z));
 
+		// Delete Chunk out of destroy distance
 		if(distance.x > DESTROY_DISTANCE || distance.y > DESTROY_DISTANCE) {
 			delete iter->second;
 			iter->second = nullptr;
@@ -143,7 +146,7 @@ void ChunkManager::Render(BaseCamera& camera) {
 			continue;
 		}
 
-
+		// Dont render chunk out of render distance
 		if(distance.x >= RENDERING_DISTANCE || distance.y >= RENDERING_DISTANCE) {
 			++iter;
 			continue;
@@ -163,9 +166,17 @@ void ChunkManager::Render(BaseCamera& camera) {
 		if(iter->second->uploadMeshToGPU == true)
 			iter->second->CreateMesh();
 
+		// Check if the chunk is in camera frustum
+		if(camera.IsAABBInFrustum(*iter->second->GetAABB()) == false) {
+			++iter;
+			continue;
+		}
+
 		// Render Mesh
 		iter->second->Render(*solidShader);
 		++iter;
+
+		renderCount++;
 	}
 
 	// Opaque Rendering
@@ -180,26 +191,38 @@ void ChunkManager::Render(BaseCamera& camera) {
 		if(!iter->second->hasWorldData)
 			continue;
 
-		glm::ivec2 distance = glm::abs(glm::ivec2(iter->second->GetIndexPos().x - playerChunk.x, iter->second->GetIndexPos().y - playerChunk.z));
+		glm::ivec2 distance = glm::abs(glm::ivec2(iter->second->GetLocalCoords().x - playerChunk.x, iter->second->GetLocalCoords().y - playerChunk.z));
 		if(distance.x >= RENDERING_DISTANCE || distance.y >= RENDERING_DISTANCE)
+			continue;
+
+		if(camera.IsAABBInFrustum(*iter->second->GetAABB()) == false)
 			continue;
 
 		iter->second->RenderOpaque(*waterShader);
 	}
 	glEnable(GL_CULL_FACE);
+
+
+	ImGui::Begin("Render Info");
+	ImGui::Text("Rendered Chunks: %i / %i", renderCount, chunks.size());
+	ImGui::End();
+
 }
 
 Chunk* ChunkManager::CreateChunk(const glm::ivec2& index) {
-	Chunk* chunk = FindChunk(index);
+	Chunk* chunk = FindChunkLock(index);
 	if(chunk != nullptr) return chunk;
 
+
 	chunk = new Chunk(index, *this);
+	
+	std::unique_lock<std::mutex> lock(mutex);
 	chunks.emplace(index, chunk);
 
 	return chunk;
 }
 
-BlockIDs ChunkManager::GetBlock(const float& x, const float& y, const float& z) const {
+BlockIDs ChunkManager::GetBlock(const float& x, const float& y, const float& z) {
 	if(y >= Chunk::CHUNK_HEIGHT || y < 0.0f)
 		return BlockIDs::AIR;
 
@@ -210,7 +233,7 @@ BlockIDs ChunkManager::GetBlock(const float& x, const float& y, const float& z) 
 	return chunk->GetBlock(x, y, z);
 }
 
-BlockIDs ChunkManager::GetBlock(const glm::vec3& worldPosition) const {
+BlockIDs ChunkManager::GetBlock(const glm::vec3& worldPosition) {
 	return GetBlock(worldPosition.x, worldPosition.y, worldPosition.z);
 }
 
@@ -219,6 +242,7 @@ void ChunkManager::SetBlock(const glm::vec3& worldPosition, const BlockIDs& bloc
 }
 
 void ChunkManager::SetBlocks(const std::vector<glm::vec3>& pos, std::vector<BlockIDs>& blocks) {
+
 	int blockSize = blocks.size();
 
 	for(int i = 0; i < pos.size(); i++) {
@@ -227,6 +251,7 @@ void ChunkManager::SetBlocks(const std::vector<glm::vec3>& pos, std::vector<Bloc
 		if(chunk == nullptr)
 			chunk = CreateChunk(glm::ivec2(glm::floor(pos[i].x / Chunk::CHUNK_SIZE), glm::floor(pos[i].z / Chunk::CHUNK_SIZE)));
 
+		std::unique_lock<std::mutex> lock(mutex);
 		chunk->SetBlock(pos[i], (i < blockSize) ? blocks[i] : BlockIDs::AIR);
 	}
 }
@@ -270,25 +295,21 @@ void ChunkManager::SetBlock(const float& x, const float& y, const float& z, cons
 	chunk->SetBlock(x, y, z, block);
 }
 
-Chunk* ChunkManager::FindChunk(const glm::ivec2& index) const {
-	
-	glm::ivec2 key = index;
-
-	auto iter = chunks.find(key);
+Chunk* ChunkManager::FindChunk(const glm::ivec2& index) {
+	auto iter = chunks.find(index);
 	return (iter != chunks.end()) ? iter->second : nullptr;
 }
 
-Chunk* ChunkManager::FindChunk(const glm::vec3& worldPosition) const {
-	glm::ivec2 key = glm::ivec2(std::floor(worldPosition.x / Chunk::CHUNK_SIZE), std::floor(worldPosition.z / Chunk::CHUNK_SIZE));
-
-	auto iter = chunks.find(key);
-	return (iter != chunks.end()) ? iter->second : nullptr;
+Chunk* ChunkManager::FindChunk(const glm::vec3& worldPosition) {
+	return FindChunk(glm::ivec2(std::floor(worldPosition.x / Chunk::CHUNK_SIZE), std::floor(worldPosition.z / Chunk::CHUNK_SIZE)));
 }
 
 // Returns nullptr if chunk doesn't exists, X & Z are worldPosition
-Chunk* ChunkManager::FindChunk(const float& x, const float& z) const {
-	glm::ivec2 key = glm::ivec2(std::floor(x / Chunk::CHUNK_SIZE), std::floor(z / Chunk::CHUNK_SIZE));
+Chunk* ChunkManager::FindChunk(const float& x, const float& z) {
+	return FindChunk(glm::ivec2(std::floor(x / Chunk::CHUNK_SIZE), std::floor(z / Chunk::CHUNK_SIZE)));
+}
 
-	auto iter = chunks.find(key);
-	return (iter != chunks.end()) ? iter->second : nullptr;
+Chunk* ChunkManager::FindChunkLock(const glm::ivec2& index) {
+	std::unique_lock<std::mutex> lock(mutex);
+	return FindChunk(index);
 }

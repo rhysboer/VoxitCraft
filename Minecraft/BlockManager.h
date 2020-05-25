@@ -2,6 +2,7 @@
 #include <vector>
 #include <array>
 #include "glm/glm.hpp"
+#include "TileMap.h"
 
 typedef unsigned int uint;
 
@@ -18,6 +19,7 @@ enum class BlockIDs {
 	SAND,
 	SNOW_DIRT,
 	WOOD_PLANKS,
+	MAGMA,
 	WATER,
 
 	// Block type error
@@ -53,13 +55,23 @@ struct TextureIndex {
 
 // Data about a block type
 struct BlockData {
+	enum MeshType {
+		BLOCK,
+		LIQUID,
+		X,
+	};
 	TextureIndex texture;
 	BlockIDs id;
 	const char* name;
 	bool isSolid;
 	bool isTransparent;
+	bool useAmbient;
+	/*
+	MeshType mesh;
+	*/
 
-	BlockData(BlockIDs _id, const char* _name, bool transparent, bool solid, TextureIndex texture) : id(_id), name(_name), isTransparent(transparent), isSolid(solid) {
+	BlockData(BlockIDs _id, const char* _name, bool transparent, bool solid, bool useAmbient, TextureIndex texture) 
+		: id(_id), name(_name), isTransparent(transparent), isSolid(solid), useAmbient(useAmbient) {
 		this->texture = texture;
 	}
 };
@@ -68,13 +80,17 @@ class BlockManager {
 public:
 
 	static void LoadBlockDatabase();
+	static void DestroyBlockDatabase();
 
 	static const BlockData const* GetBlockData(const BlockIDs& id);
 	static int TotalBlocks();
 
 private:
-	~BlockManager();
-	BlockManager();
+	~BlockManager() {};
+	BlockManager() {};
+
+	static TileMap* blockTexture;
+	static TileMap* waterTexture;
 
 	static std::vector<BlockData> blocks;
 };

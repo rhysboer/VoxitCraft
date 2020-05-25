@@ -12,9 +12,13 @@ Chunk::Chunk(glm::ivec2 index, ChunkManager& world) :localCoord(index), hasWorld
 		neighbourChunks[i] = nullptr;
 
 	solidMesh.meshData.reserve(4500);
+
+	// Create chunks AABB
+	aabb = new AABB(glm::vec3(worldCoord.x + (CHUNK_SIZE / 2.0f), CHUNK_HEIGHT / 2.0f, worldCoord.z + (CHUNK_SIZE / 2.0f)), glm::vec3(CHUNK_SIZE, CHUNK_HEIGHT, CHUNK_SIZE));
 }
 
 Chunk::~Chunk() {
+	delete aabb;
 
 	GetNeighbours();
 	for(int i = 0; i < (int)NEIGHBOUR::_TOTAL; i++) {
@@ -69,7 +73,9 @@ void Chunk::SetBlock(const int& x, const int& y, const int& z, const BlockIDs& b
 		return;
 
 	if(!IsPositionInChunk(x - worldCoord.x, y - worldCoord.y, z - worldCoord.z)) {
-		return chunkManager->SetBlock(x, y, z, block);
+		printf("Should not be reaching here: Chunk/SetBlock() failed to find block inside chunk! Chunk Index: X%i, Z%i \n ", localCoord.x, localCoord.y);
+		return;
+		//return chunkManager->SetBlock(x, y, z, block);
 	}
 
 	SetBlock(ToBlockIndex(x - worldCoord.x, y - worldCoord.y, z - worldCoord.z), block);
@@ -80,7 +86,9 @@ void Chunk::SetBlock(const glm::vec3& worldPosition, const BlockIDs& block) {
 		return;
 
 	if(!IsPositionInChunk(worldPosition - worldCoord)) {
-		return chunkManager->SetBlock(worldPosition, block);
+		printf("Should not be reaching here: Chunk/SetBlock() failed to find block inside chunk! Chunk Index: X%i, Z%i \n ", localCoord.x, localCoord.y);
+		return;
+		//return chunkManager->SetBlock(worldPosition, block);
 	}
 
 	SetBlock(ToBlockIndex(worldPosition - worldCoord), block);
@@ -157,7 +165,7 @@ BlockIDs Chunk::GetBlockLocal(const float& x, const float& y, const float& z) co
 	return BlockIDs::AIR;
 }
 
-glm::vec2 Chunk::GetIndexPos() const {
+glm::vec2 Chunk::GetLocalCoords() const {
 	return localCoord;
 }
 
@@ -187,75 +195,10 @@ BlockIDs Chunk::GetChunkOrNeighbourBlock(const float& x, const float& y, const f
 		return BlockIDs::AIR;
 	
 	return neighbourChunks[(int)neighbour]->GetBlockLocal(Math::Modulo(x, CHUNK_SIZE), y, Math::Modulo(z, CHUNK_SIZE));
+}
 
-	/*
-	// If Righthand side of chunk
-	if(x >= CHUNK_SIZE) {
-		//if(neighbourChunks[(int)NEIGHBOUR::RIGHT] == nullptr) {
-		//	neighbourChunks[(int)NEIGHBOUR::RIGHT] = chunkManager->FindChunk(x + worldCoord.x, z + worldCoord.z);
-		//
-		//	if(neighbourChunks[(int)NEIGHBOUR::RIGHT] == nullptr)
-		//		return BlockIDs::AIR;
-		//}
-		if(neighbourChunks[(int)NEIGHBOUR::RIGHT] == nullptr)
-			return BlockIDs::AIR;
-	
-		return neighbourChunks[(int)NEIGHBOUR::RIGHT]->GetBlockLocal(
-			Math::Modulo(x, CHUNK_SIZE),
-			y,
-			Math::Modulo(z, CHUNK_SIZE)
-		);
-	}
-	
-	// If Lefthand side of chunk
-	if(x < 0) {
-		//if(neighbourChunks[(int)NEIGHBOUR::LEFT] == nullptr) {
-		//	neighbourChunks[(int)NEIGHBOUR::LEFT] = chunkManager->FindChunk(x + worldCoord.x, z + worldCoord.z);
-		//
-		//}
-		if(neighbourChunks[(int)NEIGHBOUR::LEFT] == nullptr)
-			return BlockIDs::AIR;
-	
-		return neighbourChunks[(int)NEIGHBOUR::LEFT]->GetBlockLocal(
-			Math::Modulo(x, CHUNK_SIZE),
-			y,
-			Math::Modulo(z, CHUNK_SIZE)
-		);
-	}
-	
-	// If front of the chunk (towards screen)
-	if(z < 0) {
-		//if(neighbourChunks[(int)NEIGHBOUR::FRONT] == nullptr) {
-		//	neighbourChunks[(int)NEIGHBOUR::FRONT] = chunkManager->FindChunk(x + worldCoord.x, z + worldCoord.z);
-		//}	
-		if(neighbourChunks[(int)NEIGHBOUR::FRONT] == nullptr)
-			return BlockIDs::AIR;
-	
-		return neighbourChunks[(int)NEIGHBOUR::FRONT]->GetBlockLocal(
-			Math::Modulo(x, CHUNK_SIZE),
-			y,
-			Math::Modulo(z, CHUNK_SIZE)
-		);
-	}
-	
-	// If back side of chunk (away from screen)
-	if(z >= CHUNK_SIZE) {
-		//if(neighbourChunks[(int)NEIGHBOUR::BACK] == nullptr) {
-		//	neighbourChunks[(int)NEIGHBOUR::BACK] = chunkManager->FindChunk(x + worldCoord.x, z + worldCoord.z);
-		//
-		//}
-		if(neighbourChunks[(int)NEIGHBOUR::BACK] == nullptr)
-			return BlockIDs::AIR;
-	
-		return neighbourChunks[(int)NEIGHBOUR::BACK]->GetBlockLocal(
-			Math::Modulo(x, CHUNK_SIZE),
-			y,
-			Math::Modulo(z, CHUNK_SIZE)
-		);
-	}
-	
-	return BlockIDs::AIR;
-	*/
+AABB const* Chunk::GetAABB() const {
+	return aabb;
 }
 
 void Chunk::GetNeighbours() {
@@ -318,13 +261,13 @@ void Chunk::GetFaceNeighbours(const glm::ivec3& faceDirection, const glm::vec3& 
 
 		blocks[i] = 0; 
 		block = BlockManager::GetBlockData(GetChunkOrNeighbourBlock(origin_local.x + offsets[index + 0].x, origin_local.y + offsets[index + 0].y, origin_local.z + offsets[index + 0].z));
-		blocks[i] += (block->isTransparent != false && block->id != BlockIDs::WATER) ? 1.0f : 0.0f;
+		blocks[i] += (!block->useAmbient) ? 1.0f : 0.0f;
 
 		block = BlockManager::GetBlockData(GetChunkOrNeighbourBlock(origin_local.x + offsets[index + 1].x, origin_local.y + offsets[index + 1].y, origin_local.z + offsets[index + 1].z));
-		blocks[i] += (block->isTransparent != false && block->id != BlockIDs::WATER) ? 1.0f : 0.0f;
+		blocks[i] += (!block->useAmbient) ? 1.0f : 0.0f;
 		
 		block = BlockManager::GetBlockData(GetChunkOrNeighbourBlock(origin_local.x + offsets[index + 2].x, origin_local.y + offsets[index + 2].y, origin_local.z + offsets[index + 2].z));
-		blocks[i] += (block->isTransparent != false && block->id != BlockIDs::WATER) ? 1.0f : 0.0f;
+		blocks[i] += (!block->useAmbient) ? 1.0f : 0.0f;
 	}
 }
 
@@ -395,9 +338,9 @@ bool Chunk::NeighbourSlices(const unsigned int& y) {
 		
 
 		// CHANGE THIS SHIT
-		if(neighbourChunks[i] == nullptr) {
-			neighbourChunks[i] = chunkManager->FindChunk(localCoord + neighbourOffsets[i]);
-		}
+		//if(neighbourChunks[i] == nullptr) {
+		//	neighbourChunks[i] = chunkManager->FindChunk(localCoord + neighbourOffsets[i]);
+		//}
 	
 		Chunk* chunk = neighbourChunks[i];
 		if(chunk != nullptr) {
@@ -419,24 +362,38 @@ bool Chunk::NeighbourSlices(const unsigned int& y) {
 void Chunk::SetWorldData(const std::array<BlockIDs, CHUNK_MASS>& data, int height) {
 	GetNeighbours();
 
+	// Transfer all data to blocks inside chunk
 	int max = height * CHUNK_SLICE;
 	for(int i = 0; i < max; i++) {
 		if(data[i] == BlockIDs::AIR)
 			continue;
 
-		SetBlock(i, data[i]);
+		BlockData const* newblock = BlockManager::GetBlockData(data[i]);
+		BlockData const* oldBlock = BlockManager::GetBlockData(blocks[i]);
+
+		int y = i / (CHUNK_SIZE * CHUNK_SIZE);
+
+		if(!newblock->isTransparent && oldBlock->isTransparent) {
+			chunkSlice.solidBlocks[y] += 1;
+			if(oldBlock->id != BlockIDs::AIR)
+				chunkSlice.transparentBlocks[y] -= 1;
+		} else if(newblock->isTransparent && !oldBlock->isTransparent) {
+			chunkSlice.solidBlocks[y] -= 1;
+			if(newblock->id != BlockIDs::AIR)
+				chunkSlice.transparentBlocks[y] += 1;
+		} else if(newblock->isTransparent && oldBlock->isTransparent) {
+			if(newblock->id != BlockIDs::AIR && oldBlock->id != BlockIDs::AIR)
+				chunkSlice.transparentBlocks[y] += 1;
+		}
+
+		//SetBlock(i, data[i]);
+		blocks[i] = data[i];
 	}
+
+	highestBlock = height;
 
 	hasWorldData = true;
 	isDirty = true;
-
-	if(localCoord == glm::ivec2(-1, -2) || localCoord == glm::ivec2(0, -2)) {
-		printf("X: %i, z: %i\n", this->localCoord.x, this->localCoord.y);
-		printf("LEFT: %s\n", (neighbourChunks[(int)NEIGHBOUR::LEFT] != nullptr) ? "true" : "false");
-		printf("RIGHT: %s\n", (neighbourChunks[(int)NEIGHBOUR::RIGHT] != nullptr) ? "true" : "false");
-		printf("BACK: %s\n", (neighbourChunks[(int)NEIGHBOUR::BACK] != nullptr) ? "true" : "false");
-		printf("FRONT: %s\n\n", (neighbourChunks[(int)NEIGHBOUR::FRONT] != nullptr) ? "true" : "false");
-	}
 }
 
 void Chunk::GenerateMeshData() {
@@ -540,27 +497,6 @@ void Chunk::GenerateMeshData() {
 						chunkManager->waterTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::RIGHT], texCoords);
 					else
 						chunkManager->terrainTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::RIGHT], texCoords);
-				
-
-					/*
-						Vertex Order
-							
-					  4th_______ 3rd
-						|\	X-  |
-					 Z+ |  \    | Z-
-						|    \  |
-					 1st|___X+_\|2nd
-						   
-						[7][6][5]
-						[0][_][4]
-						[1][2][3]
-					
-						0 = 0, 1, 2
-						1 = 2, 3, 4
-						2 = 4, 5, 6
-						3 = 6, 7, 0
-					*/
-
 
 					GetFaceNeighbours(glm::ivec3(1, 0, 0), glm::vec3(x, y, z), ambient);
 
@@ -679,26 +615,6 @@ void Chunk::GenerateMeshData() {
 						chunkManager->waterTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::UP], texCoords);
 					else
 						chunkManager->terrainTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::UP], texCoords);
-				
-
-					/*
-						Vertex Order
-							Z-
-					 3rd _______ 2nd
-						|\	    |
-					 X- |  \    | X+
-						|    \  |
-					 4th|______\| 1st
-						   Z+
-						[5][4][3]
-						[6][_][2]
-						[7][0][1]
-
-						0 = 0, 1, 2
-						1 = 2, 3, 4
-						2 = 4, 5, 6
-						3 = 6, 7, 0
-					*/
 
 					GetFaceNeighbours(glm::ivec3(0, 1, 0), glm::vec3(x, y, z), ambient);
 
@@ -852,6 +768,8 @@ void Chunk::CreateMesh() {
 
 	solidMesh.Clear();
 	waterMesh.Clear();
+	solidMesh.meshData.shrink_to_fit();
+	waterMesh.meshData.shrink_to_fit();
 	uploadMeshToGPU = false;
 
 	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();

@@ -26,6 +26,10 @@ glm::vec3 Entity::GetHeadPosition() const {
 	return model->GetPosition() + headOffset;
 }
 
+glm::mat4 Entity::GetMatrix() {
+	return model->GetTransform().GetMatrix();
+}
+
 const bool Entity::IsGrounded() const {
 	return isGrounded;
 }

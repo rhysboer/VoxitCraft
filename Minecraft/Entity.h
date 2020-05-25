@@ -15,6 +15,7 @@ public:
 
 	glm::vec3 GetPosition() const;
 	glm::vec3 GetHeadPosition() const;
+	glm::mat4 GetMatrix();
 	const bool IsGrounded() const;
 
 	void SetPosition();
