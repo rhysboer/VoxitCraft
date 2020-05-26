@@ -6,7 +6,7 @@ const glm::vec3 World::worldGravity = glm::vec3(0, -0.5, 0);
 
 
 World::World() {
-	BlockManager::LoadBlockDatabase();
+	BlockManager::Init();
 	player = new EntityPlayer(glm::vec3(0, 50, 0));
 
 	skybox = new SkyBox("./data/textures/skybox/");
@@ -20,6 +20,7 @@ World::~World() {
 	delete chunkManager;
 
 	delete player;
+	BlockManager::Destroy();
 }
 
 void World::Update() {

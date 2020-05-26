@@ -20,10 +20,20 @@ enum class BlockIDs {
 	SNOW_DIRT,
 	WOOD_PLANKS,
 	MAGMA,
+	BUSH,
 	WATER,
 
 	// Block type error
 	_TOTAL
+};
+
+enum class SpriteSheet {
+	BLOCK,
+	WATER
+};
+
+enum class MeshType {
+	BLOCK, LIQUID, X,
 };
 
 struct TextureIndex {
@@ -55,23 +65,17 @@ struct TextureIndex {
 
 // Data about a block type
 struct BlockData {
-	enum MeshType {
-		BLOCK,
-		LIQUID,
-		X,
-	};
 	TextureIndex texture;
+	SpriteSheet spriteSheet;
 	BlockIDs id;
 	const char* name;
 	bool isSolid;
 	bool isTransparent;
 	bool useAmbient;
-	/*
-	MeshType mesh;
-	*/
+	MeshType meshType;
 
-	BlockData(BlockIDs _id, const char* _name, bool transparent, bool solid, bool useAmbient, TextureIndex texture) 
-		: id(_id), name(_name), isTransparent(transparent), isSolid(solid), useAmbient(useAmbient) {
+	BlockData(BlockIDs _id, const char* _name, bool transparent, bool solid, bool useAmbient, TextureIndex texture, MeshType mesh = MeshType::BLOCK, SpriteSheet spriteSheet = SpriteSheet::BLOCK)
+		: id(_id), name(_name), isTransparent(transparent), isSolid(solid), useAmbient(useAmbient), meshType(mesh), spriteSheet(spriteSheet) {
 		this->texture = texture;
 	}
 };
@@ -79,19 +83,56 @@ struct BlockData {
 class BlockManager {
 public:
 
-	static void LoadBlockDatabase();
-	static void DestroyBlockDatabase();
+	static void Init();
+	static void Destroy();
 
 	static const BlockData const* GetBlockData(const BlockIDs& id);
+	static const TileMap const* GetTileMap(const SpriteSheet type = SpriteSheet::BLOCK);
+	static void GetTextureCoords(const BlockIDs& block, const unsigned int& face, std::array<glm::vec2, 4>& coords);
+
 	static int TotalBlocks();
+
+	inline static void GetMeshFace(const MeshType& type, const TextureIndex::Face& face, const unsigned int& corner, const glm::vec3& pos, std::vector<float>& vertices) {
+		int spot = ((int)face * 24) + (corner * 6);
+		if(type == MeshType::BLOCK) {
+			vertices.emplace_back(vertexDataBlock[spot + 0] + pos.x);	// Vertex X
+			vertices.emplace_back(vertexDataBlock[spot + 1] + pos.y);	// Vertex Y
+			vertices.emplace_back(vertexDataBlock[spot + 2] + pos.z);	// Vertex Z
+			vertices.emplace_back(vertexDataBlock[spot + 3]);			// Normal X
+			vertices.emplace_back(vertexDataBlock[spot + 4]);			// Normal Y
+			vertices.emplace_back(vertexDataBlock[spot + 5]);			// Normal Z
+		} else if(type == MeshType::LIQUID) {
+			vertices.emplace_back(vertexDataWater[spot + 0] + pos.x);	// Vertex X
+			vertices.emplace_back(vertexDataWater[spot + 1] + pos.y);	// Vertex Y
+			vertices.emplace_back(vertexDataWater[spot + 2] + pos.z);	// Vertex Z
+			vertices.emplace_back(vertexDataWater[spot + 3]);			// Normal X
+			vertices.emplace_back(vertexDataWater[spot + 4]);			// Normal Y
+			vertices.emplace_back(vertexDataWater[spot + 5]);			// Normal Z
+		} else {
+			vertices.emplace_back(vertexDataX[spot + 0] + pos.x);	// Vertex X
+			vertices.emplace_back(vertexDataX[spot + 1] + pos.y);	// Vertex Y
+			vertices.emplace_back(vertexDataX[spot + 2] + pos.z);	// Vertex Z
+			vertices.emplace_back(vertexDataX[spot + 3]);			// Normal X
+			vertices.emplace_back(vertexDataX[spot + 4]);			// Normal Y
+			vertices.emplace_back(vertexDataX[spot + 5]);			// Normal Z
+		}
+	}
+	static int GetMeshFaceCount(const MeshType& type);
 
 private:
 	~BlockManager() {};
 	BlockManager() {};
+	
+	static void LoadBlockDatabase();
 
 	static TileMap* blockTexture;
 	static TileMap* waterTexture;
 
 	static std::vector<BlockData> blocks;
+
+	// Mesh Data
+	static std::vector<float> vertexDataBlock;
+	static std::vector<float> vertexDataWater;
+	static std::vector<float> vertexDataX;
 };
 

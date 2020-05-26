@@ -218,8 +218,15 @@ void Chunk::RemoveNeighbour(Chunk* neighbour) {
 	}
 }
 
-void Chunk::GetFaceNeighbours(const glm::ivec3& faceDirection, const glm::vec3& origin_local, std::array<int, 4>& blocks) {
+void Chunk::GetFaceAmbient(const glm::ivec3& faceDirection, const glm::vec3& origin_local, std::array<int, 4>& blocks) {	
 	glm::vec3 offsets[9];
+
+	if(BlockManager::GetBlockData(GetBlockLocal(origin_local.x, origin_local.y, origin_local.z))->useAmbient == false) {
+		for(int i = 0; i < 4; i++)
+			blocks[i] = 3;
+
+		return;
+	}
 
 	if(faceDirection.y != 0) {
 		offsets[0] = glm::vec3( 0 * faceDirection.y, faceDirection.y, 1);
@@ -405,9 +412,10 @@ void Chunk::GenerateMeshData() {
 			return;
 	}
 
-
 	// Vertex Offset
-	const float offset[] = { 0.0f, 0.0f, 1.0f, 1.0f };
+	const glm::vec3 offsets[] = {
+		glm::vec3(0, 0, -1), glm::vec3(1, 0, 0), glm::vec3(0, 0, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, -1, 0)
+	};
 
 	// Current indices Index
 	unsigned int indicesSolid = 0;
@@ -430,9 +438,6 @@ void Chunk::GenerateMeshData() {
 		return false;
 	};
 
-	// Timer
-	std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
-
 	for(int y = 0; y < highestBlock + 1; y++) {
 		if(NeighbourSlices(y))
 			continue;
@@ -452,251 +457,43 @@ void Chunk::GenerateMeshData() {
 					indicesIndex = &indicesSolid;
 				}
 
-				// BACKWARD (X: 0 Y: 0 Z: 1)
-				if(BuildFace(block, BlockManager::GetBlockData(GetChunkOrNeighbourBlock(x, y, z + 1)))) {
-					if(block->id == BlockIDs::WATER)
-						chunkManager->waterTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::BACK], texCoords);
-					else
-						chunkManager->terrainTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::BACK], texCoords);
+				int faceCount = BlockManager::GetMeshFaceCount(block->meshType);
+				glm::vec3 pos = glm::vec3(x, y, z);
 
-					GetFaceNeighbours(glm::ivec3(0, 0, 1), glm::vec3(x, y, z), ambient);
+				for(int i = 0; i < faceCount; i++) {
 
-					for(int i = 0; i < 4; i++) {
-						// Vertices
-						mesh->meshData.emplace_back(x + offset[(i + 1) % 4]);	// X
-						mesh->meshData.emplace_back(y + offset[i % 4]);			// Y
-						mesh->meshData.emplace_back(z + 1.0f);					// Z
+					if(block->meshType == MeshType::BLOCK || block->meshType == MeshType::LIQUID)
+						if(!BuildFace(block, BlockManager::GetBlockData(GetChunkOrNeighbourBlock(x + offsets[i].x, y + offsets[i].y, z + offsets[i].z))))
+							continue;
 
-						// Normals
-						mesh->meshData.emplace_back(0.0f); // X
-						mesh->meshData.emplace_back(0.0f); // Y
-						mesh->meshData.emplace_back(1.0f); // Z
+					// Get Texture Coords
+					BlockManager::GetTextureCoords(block->id, i, texCoords);
 
-						// Tex Coordinates
-						mesh->meshData.emplace_back(texCoords[i].x); // X
-						mesh->meshData.emplace_back(texCoords[i].y); // Y
+					// Get Ambient
+					GetFaceAmbient(offsets[i], pos, ambient);
 
-						// Ambient Occlusion
-						mesh->meshData.emplace_back(ambient[i]);
+					for(int verts = 0; verts < 4; verts++) {
+						BlockManager::GetMeshFace(block->meshType, (TextureIndex::Face)i, verts, pos, mesh->meshData);
+
+						mesh->meshData.emplace_back(texCoords[verts].x);
+						mesh->meshData.emplace_back(texCoords[verts].y);
+
+						mesh->meshData.emplace_back(ambient[verts]);
 					}
 
 					mesh->indices.emplace_back(*indicesIndex + 0);
 					mesh->indices.emplace_back(*indicesIndex + 1);
 					mesh->indices.emplace_back(*indicesIndex + 2);
-					
+
 					mesh->indices.emplace_back(*indicesIndex + 0);
 					mesh->indices.emplace_back(*indicesIndex + 2);
 					mesh->indices.emplace_back(*indicesIndex + 3);
-					
-					*indicesIndex += 4;
-				}
 
-				// RIGHT (X: 1 Y: 0 Z: 0)
-				if(BuildFace(block, BlockManager::GetBlockData(GetChunkOrNeighbourBlock(x + 1, y, z)))) {
-					if(block->id == BlockIDs::WATER)
-						chunkManager->waterTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::RIGHT], texCoords);
-					else
-						chunkManager->terrainTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::RIGHT], texCoords);
-
-					GetFaceNeighbours(glm::ivec3(1, 0, 0), glm::vec3(x, y, z), ambient);
-
-					for(int i = 0; i < 4; i++) {
-						// Vertices
-						mesh->meshData.emplace_back(x + 1.0f);					// X
-						mesh->meshData.emplace_back(y + offset[i % 4]);	// Y
-						mesh->meshData.emplace_back(z + offset[(i + 3) % 4]);			// Z
-				
-						// Normals
-						mesh->meshData.emplace_back(1.0f); // X
-						mesh->meshData.emplace_back(0.0f); // Y
-						mesh->meshData.emplace_back(0.0f); // Z
-				
-						// Tex Coordinates
-						mesh->meshData.emplace_back(texCoords[i].x); // X
-						mesh->meshData.emplace_back(texCoords[i].y); // Y
-
-						// Ambient Occlusion
-						mesh->meshData.emplace_back(ambient[i]);
-					}
-				
-					mesh->indices.emplace_back(*indicesIndex + 0);
-					mesh->indices.emplace_back(*indicesIndex + 1);
-					mesh->indices.emplace_back(*indicesIndex + 2);
-				
-					mesh->indices.emplace_back(*indicesIndex + 0);
-					mesh->indices.emplace_back(*indicesIndex + 2);
-					mesh->indices.emplace_back(*indicesIndex + 3);
-				
-					*indicesIndex += 4;
-				}
-				
-				// FORWARD ( X: 0 Y: 0 Z: -1)
-				if(BuildFace(block, BlockManager::GetBlockData(GetChunkOrNeighbourBlock(x, y, z - 1)))) {
-					if(block->id == BlockIDs::WATER)
-						chunkManager->waterTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::FRONT], texCoords);
-					else
-						chunkManager->terrainTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::FRONT], texCoords);
-				
-					GetFaceNeighbours(glm::ivec3(0, 0, -1), glm::vec3(x, y, z), ambient);
-
-					for(int i = 0; i < 4; i++) {
-						// Vertices
-						mesh->meshData.emplace_back(x + offset[(i + 3) % 4]);			// X
-						mesh->meshData.emplace_back(y + offset[i % 4]);				// Y
-						mesh->meshData.emplace_back(z);								// Z
-				
-						// Normals
-						mesh->meshData.emplace_back(0.0f);	// X
-						mesh->meshData.emplace_back(0.0f);	// Y
-						mesh->meshData.emplace_back(-1.0f);	// Z
-				
-						// Tex Coordinates
-						mesh->meshData.emplace_back(texCoords[i].x); // X
-						mesh->meshData.emplace_back(texCoords[i].y); // Y
-
-						// Ambient Occlusion
-						mesh->meshData.emplace_back(ambient[i]);
-					}
-				
-					mesh->indices.emplace_back(*indicesIndex + 0);
-					mesh->indices.emplace_back(*indicesIndex + 1);
-					mesh->indices.emplace_back(*indicesIndex + 2);
-				
-					mesh->indices.emplace_back(*indicesIndex + 0);
-					mesh->indices.emplace_back(*indicesIndex + 2);
-					mesh->indices.emplace_back(*indicesIndex + 3);
-				
-					*indicesIndex += 4;
-				}
-				
-				// LEFT (X: -1 Y: 0 Z: 0)
-				if(BuildFace(block, BlockManager::GetBlockData(GetChunkOrNeighbourBlock(x - 1, y, z)))) {
-					if(block->id == BlockIDs::WATER)
-						chunkManager->waterTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::LEFT], texCoords);
-					else
-					if(block->id != BlockIDs::WATER)
-						chunkManager->terrainTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::LEFT], texCoords);
-				
-					GetFaceNeighbours(glm::ivec3(-1, 0, 0), glm::vec3(x, y, z), ambient);
-
-					for(int i = 0; i < 4; i++) {
-						// Vertices
-						mesh->meshData.emplace_back(x);							// X
-						mesh->meshData.emplace_back(y + offset[i % 4]);			// Y
-						mesh->meshData.emplace_back(z + offset[(i + 1) % 4]);	// Z
-				
-						// Normals
-						mesh->meshData.emplace_back(-1.0f); // X
-						mesh->meshData.emplace_back(0.0f); // Y
-						mesh->meshData.emplace_back(0.0f); // Z
-				
-						// Tex Coordinates
-						mesh->meshData.emplace_back(texCoords[i].x); // X
-						mesh->meshData.emplace_back(texCoords[i].y); // Y
-
-						// Ambient Occlusion
-						mesh->meshData.emplace_back(ambient[i]);
-					}
-				
-					mesh->indices.emplace_back(*indicesIndex + 0);
-					mesh->indices.emplace_back(*indicesIndex + 1);
-					mesh->indices.emplace_back(*indicesIndex + 2);
-				
-					mesh->indices.emplace_back(*indicesIndex + 0);
-					mesh->indices.emplace_back(*indicesIndex + 2);
-					mesh->indices.emplace_back(*indicesIndex + 3);
-				
-					*indicesIndex += 4;
-				}
-				
-				// TOP (X: 0 Y: 1 Z: 0)
-				if(BuildFace(block, BlockManager::GetBlockData(GetChunkOrNeighbourBlock(x, y + 1, z)))) {
-					if(block->id == BlockIDs::WATER)
-						chunkManager->waterTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::UP], texCoords);
-					else
-						chunkManager->terrainTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::UP], texCoords);
-
-					GetFaceNeighbours(glm::ivec3(0, 1, 0), glm::vec3(x, y, z), ambient);
-
-					for(int i = 0; i < 4; i++) {
-						// Vertices
-						mesh->meshData.emplace_back(x + offset[(i + 2) % 4]);	// X
-						mesh->meshData.emplace_back(y + 1.0f);					// Y
-						mesh->meshData.emplace_back(z + offset[(i + 3) % 4]);	// Z
-				
-						// Normals
-						mesh->meshData.emplace_back(0.0f); // X
-						mesh->meshData.emplace_back(1.0f); // Y
-						mesh->meshData.emplace_back(0.0f); // Z
-				
-						// Tex Coordinates
-						mesh->meshData.emplace_back(texCoords[i].x); // X
-						mesh->meshData.emplace_back(texCoords[i].y); // Y
-
-						
-						// Ambient Occlusion
-						mesh->meshData.emplace_back(ambient[i]);
-					}
-				
-					mesh->indices.emplace_back(*indicesIndex + 0);
-					mesh->indices.emplace_back(*indicesIndex + 1);
-					mesh->indices.emplace_back(*indicesIndex + 2);
-				
-					mesh->indices.emplace_back(*indicesIndex + 0);
-					mesh->indices.emplace_back(*indicesIndex + 2);
-					mesh->indices.emplace_back(*indicesIndex + 3);
-				
-					*indicesIndex += 4;
-				}
-				
-				// BOT (X: 0 Y: -1 Z: 0)
-				if(BuildFace(block, BlockManager::GetBlockData(GetChunkOrNeighbourBlock(x, y - 1, z))) && y != 0) { // REMOVE y != 0
-					if(block->id == BlockIDs::WATER)
-						chunkManager->waterTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::DOWN], texCoords);
-					else
-						chunkManager->terrainTexture->GetSpriteCoordinates(block->texture[(int)TextureIndex::Face::DOWN], texCoords);
-				
-					GetFaceNeighbours(glm::ivec3(0,-1, 0), glm::vec3(x, y, z), ambient);
-
-					for(int i = 0; i < 4; i++) {
-						// Vertices
-						mesh->meshData.emplace_back(x + offset[(i + 0) % 4]);	// X
-						mesh->meshData.emplace_back(y);									// Y
-						mesh->meshData.emplace_back(z + offset[(i + 3) % 4]);			// Z
-				
-						// Normals
-						mesh->meshData.emplace_back(0.0f); // X
-						mesh->meshData.emplace_back(-1.0f); // Y
-						mesh->meshData.emplace_back(0.0f); // Z
-				
-						// Tex Coordinates
-						mesh->meshData.emplace_back(texCoords[i].x); // X
-						mesh->meshData.emplace_back(texCoords[i].y); // Y
-
-						// Ambient Occlusion
-						mesh->meshData.emplace_back(ambient[i]);
-					}
-				
-					mesh->indices.emplace_back(*indicesIndex + 0);
-					mesh->indices.emplace_back(*indicesIndex + 1);
-					mesh->indices.emplace_back(*indicesIndex + 2);
-				
-					mesh->indices.emplace_back(*indicesIndex + 0);
-					mesh->indices.emplace_back(*indicesIndex + 2);
-					mesh->indices.emplace_back(*indicesIndex + 3);
-				
 					*indicesIndex += 4;
 				}
 			}
 		}
-
 	}
-
-	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-	DELETTHIS::AddTime2(time_span.count());
-	//printf("Generation Duration: %f seconds\n", time_span.count());
-
 
 	solidMesh.indicesCount = solidMesh.indices.size();
 	waterMesh.indicesCount = waterMesh.indices.size();

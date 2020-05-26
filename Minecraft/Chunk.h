@@ -78,6 +78,7 @@ public: // private
 	void SetWorldData(const std::array<BlockIDs, CHUNK_MASS>& data, int height);
 
 	void GenerateMeshData(); // Create mesh data for the chunk to make into a mesh
+	inline void CreateFacce(); 
 	void CreateMesh(); // Turn mesh data into a mesh
 	
 	void Render(Shader& solidShader);
@@ -97,7 +98,7 @@ public: // private
 
 	// Returns the block at location inside the chunk or its neighbour, ONLY USED FOR CHUNK MESH GENERATION
 	BlockIDs GetChunkOrNeighbourBlock(const float& x, const float& y, const float& z);
-	void GetFaceNeighbours(const glm::ivec3& faceDirection, const glm::vec3& origin_local, std::array<int, 4>& blocks);
+	void GetFaceAmbient(const glm::ivec3& faceDirection, const glm::vec3& origin_local, std::array<int, 4>& blocks);
 	// Set neighbouring chunk dirty
 	void SetNeighbourDirty(NEIGHBOUR neighbour);
 	// Updates the neighbour pointers

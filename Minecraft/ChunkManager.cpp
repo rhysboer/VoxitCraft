@@ -7,9 +7,6 @@ ChunkManager::ChunkManager() {
 
 	solidShader->SetInt("texture1", 3);
 	waterShader->SetInt("texture1", 0);
-	
-	terrainTexture = new TileMap("./data/textures/tileset.png", 8, 8);
-	waterTexture = new TileMap("./data/textures/water.png", 16, 1);
 
 	chunkGenerationThread = new std::thread(&ChunkManager::ChunkLoader, this);
 
@@ -24,9 +21,6 @@ ChunkManager::~ChunkManager() {
 
 		delete chunkGenerationThread;
 	}
-
-	delete terrainTexture;
-	delete waterTexture;
 
 	std::unordered_map<glm::ivec2, Chunk*>::iterator iter = chunks.begin();
 	for(; iter != chunks.end();) {
@@ -119,7 +113,7 @@ void ChunkManager::Render(BaseCamera& camera) {
 	std::unique_lock<std::mutex> lock(mutex);
 
 	// Solid Rendering
-	terrainTexture->BindTexture(3);
+	BlockManager::GetTileMap(SpriteSheet::BLOCK)->BindTexture(3);
 	solidShader->SetMatrix4("projectionView", camera.ProjectionView());
 
 	int renderCount = 0;
@@ -180,7 +174,7 @@ void ChunkManager::Render(BaseCamera& camera) {
 	}
 
 	// Opaque Rendering
-	waterTexture->BindTexture(0);
+	BlockManager::GetTileMap(SpriteSheet::WATER)->BindTexture(0);
 	waterShader->SetMatrix4("projectionView", camera.ProjectionView());
 	waterShader->SetFloat("time", Time::TotalTime());
 
@@ -201,7 +195,6 @@ void ChunkManager::Render(BaseCamera& camera) {
 		iter->second->RenderOpaque(*waterShader);
 	}
 	glEnable(GL_CULL_FACE);
-
 
 	ImGui::Begin("Render Info");
 	ImGui::Text("Rendered Chunks: %i / %i", renderCount, chunks.size());
@@ -254,14 +247,6 @@ void ChunkManager::SetBlocks(const std::vector<glm::vec3>& pos, std::vector<Bloc
 		std::unique_lock<std::mutex> lock(mutex);
 		chunk->SetBlock(pos[i], (i < blockSize) ? blocks[i] : BlockIDs::AIR);
 	}
-}
-
-TileMap& ChunkManager::GetTileMapTerrain() const {
-	return *terrainTexture;
-}
-
-TileMap& ChunkManager::GetTileMapWater() const {
-	return *waterTexture;
 }
 
 void ChunkManager::GetSolidBlocksInArea(const glm::vec3& worldPosition, const glm::vec3& size, std::vector<glm::vec3>& output) {

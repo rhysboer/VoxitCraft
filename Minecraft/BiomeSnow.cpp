@@ -12,5 +12,7 @@ BlockIDs BiomeSnow::GetBlock(const int& height) const {
 	return BlockIDs::AIR;
 }
 
+/*
 void BiomeSnow::AddStructure(Chunk& chunk, const glm::vec3& position) const {
 }
+*/

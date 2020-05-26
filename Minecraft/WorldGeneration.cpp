@@ -13,6 +13,7 @@ WorldGeneration::~WorldGeneration() {
 	delete snow;
 }
 
+/*
 void WorldGeneration::CreateChunkWorldData(Chunk& chunk) {
 	if(chunk.hasWorldData)
 		return;
@@ -86,6 +87,7 @@ void WorldGeneration::CreateChunkWorldData(Chunk& chunk) {
 	chunk.hasWorldData = true;
 	chunk.isDirty = true;
 }
+*/
 
 unsigned int WorldGeneration::CreateChunkWorldData(const Chunk& chunk, std::array<BlockIDs, Chunk::CHUNK_MASS>& data, std::vector<glm::vec3>& structurePos, std::vector<BlockIDs>& structureBlocks) {
 	if(chunk.hasWorldData)
@@ -161,7 +163,8 @@ unsigned int WorldGeneration::CreateChunkWorldData(const Chunk& chunk, std::arra
 	return maxHeight + 10;
 }
 
-// TEST
+
+/*
 int WorldGeneration::CreateChunkWorldData(const Chunk& chunk, std::array<BlockIDs, Chunk::CHUNK_MASS>& data) {
 	if(chunk.hasWorldData)
 		return 0.0f;
@@ -212,7 +215,7 @@ int WorldGeneration::CreateChunkWorldData(const Chunk& chunk, std::array<BlockID
 
 	return maxHeight;
 }
-
+*/
 
 void WorldGeneration::CreateBiomeMap(const Chunk& chunk) {
 	for(int z = 0; z < Chunk::CHUNK_SIZE; z++) {

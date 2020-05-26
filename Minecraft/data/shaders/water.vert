@@ -2,6 +2,7 @@
 layout (location = 0) in vec3 vertex; // Vertex Position
 layout (location = 1) in vec3 normals; // Normals
 layout (location = 2) in vec2 textureCoords; // Tex Coordinates
+layout (location = 3) in float ambient; // Ambient Occlusion
 
 uniform vec3 position;
 uniform mat4 projectionView;
@@ -17,9 +18,5 @@ void main()
 	mat4 model = mat4(1);
 	model[3] = vec4(position, 1);
 
-	vec3 topVertex = vertex;
-	if(topVertex.y >= 0.2)
-		topVertex.y *= 0.995;
-
-	gl_Position = projectionView * model * vec4(topVertex, 1);
+	gl_Position = projectionView * model * vec4(vertex, 1);
 }

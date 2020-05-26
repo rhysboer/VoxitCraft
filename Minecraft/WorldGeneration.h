@@ -23,10 +23,6 @@ public:
 	WorldGeneration(unsigned int heightMapSeed = 0, unsigned int moistureSeed = 0);
 	~WorldGeneration();
 
-	void CreateChunkWorldData(Chunk& chunk);
-
-	// Test
-	int CreateChunkWorldData(const Chunk& chunk, std::array<BlockIDs, Chunk::CHUNK_MASS>& data);
 	unsigned int CreateChunkWorldData(const Chunk& chunk, std::array<BlockIDs, Chunk::CHUNK_MASS>& data, std::vector<glm::vec3>& structurePos, std::vector<BlockIDs>& structureBlocks);
 
 private:

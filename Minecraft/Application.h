@@ -31,6 +31,8 @@ private:
 	virtual void OnUpdate() override;
 	virtual void OnRender() override;
 
+	void SetupObjects();
+
 private:
 	
 	static Application* app;
@@ -42,6 +44,7 @@ private:
 	
 	// Held Block Preview
 	Framebuffer* blockBuffer;
+	Object3D* selectedBlockModels[3];
 	Object3D* selectedBlock;
 	BaseCamera* camera2D;
 

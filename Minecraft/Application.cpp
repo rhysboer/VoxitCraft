@@ -11,6 +11,10 @@ void Application::SetPostProcessEffect(const PostProcessEffect& effect) {
 }
 
 void Application::OnStart() {
+	glEnable(GL_CULL_FACE);
+	//glFrontFace(GL_CCW);
+	glCullFace(GL_BACK);
+
 	// Load default shaders
 	ShaderManager::InitShaders();
 
@@ -32,77 +36,10 @@ void Application::OnStart() {
 	framebuffer = new Framebuffer(glm::ivec2(1280, 720), FramebufferType::DEPTH);
 	blockBuffer = new Framebuffer(glm::ivec2(160, 160), FramebufferType::COLOUR);
 
-	// Current block being held
-	std::vector<float> cube_verts = std::vector<float>({
-		// FRONT done 
-		 1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-		 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-		-1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+	camera2D = new Camera2D(glm::vec3(0, 4, -10), glm::vec3(0), -1.6f, 1.6f, -1.6f, 1.6f, 0.1f, 100.0f);
 
-		-1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-		-1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-		 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+	SetupObjects();
 
-		 // RIGHT
-		  1.0f,-1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-		  1.0f, 1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-		  1.0f,-1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-
-		  1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-		  1.0f,-1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-		  1.0f, 1.0f,-1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-
-		  // BACK
-		 -1.0f,-1.0f,-1.0f, 0.0f, 0.0f,-1.0f, 1.0f, 1.0f, 2.0f,
-		 -1.0f, 1.0f,-1.0f, 0.0f, 0.0f,-1.0f, 1.0f, 0.0f, 2.0f,
-		  1.0f,-1.0f,-1.0f, 0.0f, 0.0f,-1.0f, 0.0f, 1.0f, 2.0f,
-
-		  1.0f, 1.0f,-1.0f, 0.0f, 0.0f,-1.0f, 0.0f, 0.0f, 2.0f,
-		  1.0f,-1.0f,-1.0f, 0.0f, 0.0f,-1.0f, 0.0f, 1.0f, 2.0f,
-		 -1.0f, 1.0f,-1.0f, 0.0f, 0.0f,-1.0f, 1.0f, 0.0f, 2.0f,
-
-		 //LEFT DONE
-		 -1.0f,-1.0f, 1.0f,-1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 3.0f,
-		 -1.0f, 1.0f, 1.0f,-1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 3.0f,
-		 -1.0f,-1.0f,-1.0f,-1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 3.0f,
-
-		 -1.0f, 1.0f,-1.0f,-1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 3.0f,
-		 -1.0f,-1.0f,-1.0f,-1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 3.0f,
-		 -1.0f, 1.0f, 1.0f,-1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 3.0f,
-
-		 // TOP
-		 -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 4.0f,
-		  1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 4.0f,
-		 -1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 4.0f,
-
-		  1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 4.0f,
-		 -1.0f, 1.0f,-1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 4.0f,
-		  1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 4.0f,
-
-		  // BOT
-		 -1.0f,-1.0f,-1.0f, 0.0f,-1.0f, 0.0f, 0.0f, 0.0f, 5.0f,
-		  1.0f,-1.0f,-1.0f, 0.0f,-1.0f, 0.0f, 1.0f, 0.0f, 5.0f,
-		 -1.0f,-1.0f, 1.0f, 0.0f,-1.0f, 0.0f, 0.0f, 1.0f, 5.0f,
-
-		  1.0f,-1.0f, 1.0f, 0.0f,-1.0f, 0.0f, 1.0f, 1.0f, 5.0f,
-		 -1.0f,-1.0f, 1.0f, 0.0f,-1.0f, 0.0f, 0.0f, 1.0f, 5.0f,
-		  1.0f,-1.0f,-1.0f, 0.0f,-1.0f, 0.0f, 1.0f, 0.0f, 5.0f,
-													   });
-	std::vector<int> attributes = std::vector<int>({
-		3, 3, 2, 1
-	});
-
-	camera2D = new Camera2D(glm::vec3(0, -4, -10), glm::vec3(0), -1.6f, 1.6f, -1.6f, 1.6f, 0.1f, 100.0f);
-	selectedBlock = new Object3D(glm::vec3(0), cube_verts, attributes);
-	selectedBlock->SetShader(ShaderManager::AddShader("voxelSelected"));
-	selectedBlock->GetShader()->SetTextureUnit("texture1", 3);
-
-	currentBlock = (int)BlockIDs::DIRT;
-	float textureIndex[6];
-	for(int i = 0; i < 6; i++)
-		textureIndex[i] = BlockManager::GetBlockData((BlockIDs)currentBlock)->texture[i];
-
-	selectedBlock->GetShader()->SetFloatArray("faceIndex", 6, *textureIndex);
 
 	// Set up block highlighting
 	std::vector<float>highlight_verts = std::vector<float>({
@@ -219,8 +156,9 @@ void Application::OnRender() {
 	selectedBlock->Render(*camera2D);
 	blockBuffer->Render_End();
 	
-	glm::vec2 size = Engine::GetWindowSize();
 	
+	// GUI
+	glm::vec2 size = Engine::GetWindowSize();
 	ImGui::SetNextWindowPos(ImVec2(size.x - 160 - 32, 16));
 	ImGui::Begin("Block Selection", NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground);
 	ImGui::SetCursorPos(ImVec2(80.0f - 49.0f, 0.0f));
@@ -233,4 +171,76 @@ void Application::OnRender() {
 	ImGui::SetCursorPos(ImVec2(80.0f - (nameSize / 2.0f), 175.0f));
 	ImGui::Text(name);
 	ImGui::End();
+}
+
+void Application::SetupObjects() {
+	// Current block being held
+	std::vector<float> cube_verts = std::vector<float>({
+		// BACK
+		 1.0f,-1.0f, 1.0f,		 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+	    -1.0f,-1.0f, 1.0f,		 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		 1.0f, 1.0f, 1.0f,		 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		
+		-1.0f, 1.0f, 1.0f,		 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+		 1.0f, 1.0f, 1.0f,		 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		-1.0f,-1.0f, 1.0f,		 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+
+		// RIGHT				
+		1.0f,-1.0f,-1.0f,		 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+		1.0f,-1.0f, 1.0f,		 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+		1.0f, 1.0f,-1.0f,		 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+		
+		1.0f, 1.0f, 1.0f,		 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+		1.0f, 1.0f,-1.0f,		 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+		1.0f,-1.0f, 1.0f,		 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+
+		// FRONT				
+		-1.0f,-1.0f,-1.0f,		 0.0f, 0.0f,-1.0f, 1.0f, 1.0f, 2.0f,
+		 1.0f,-1.0f,-1.0f,		 0.0f, 0.0f,-1.0f, 0.0f, 1.0f, 2.0f,
+		-1.0f, 1.0f,-1.0f,		 0.0f, 0.0f,-1.0f, 1.0f, 0.0f, 2.0f,
+
+		 1.0f, 1.0f,-1.0f,		 0.0f, 0.0f,-1.0f, 0.0f, 0.0f, 2.0f,
+		-1.0f, 1.0f,-1.0f,		 0.0f, 0.0f,-1.0f, 1.0f, 0.0f, 2.0f,
+		 1.0f,-1.0f,-1.0f,		 0.0f, 0.0f,-1.0f, 0.0f, 1.0f, 2.0f,
+
+		  //LEFT DONE			
+		-1.0f,-1.0f, 1.0f,		-1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 3.0f,
+		-1.0f,-1.0f,-1.0f,		-1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 3.0f,
+		-1.0f, 1.0f, 1.0f,		-1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 3.0f,
+
+		-1.0f, 1.0f,-1.0f,		-1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 3.0f,
+		-1.0f, 1.0f, 1.0f,		-1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 3.0f,
+		-1.0f,-1.0f,-1.0f,		-1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 3.0f,
+
+	  // TOP					
+		-1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 4.0f,
+		-1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 4.0f,
+		 1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 4.0f,
+
+		 1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 4.0f,
+		 1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 4.0f,
+		-1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 4.0f,
+
+	 // BOT				
+		-1.0f,-1.0f,-1.0f,		 0.0f,-1.0f, 0.0f, 0.0f, 0.0f, 5.0f,
+		-1.0f,-1.0f, 1.0f,		 0.0f,-1.0f, 0.0f, 0.0f, 1.0f, 5.0f,
+		 1.0f,-1.0f,-1.0f,		 0.0f,-1.0f, 0.0f, 1.0f, 0.0f, 5.0f,
+
+		 1.0f,-1.0f, 1.0f,		 0.0f,-1.0f, 0.0f, 1.0f, 1.0f, 5.0f,
+		 1.0f,-1.0f,-1.0f,		 0.0f,-1.0f, 0.0f, 1.0f, 0.0f, 5.0f,
+		-1.0f,-1.0f, 1.0f,		 0.0f,-1.0f, 0.0f, 0.0f, 1.0f, 5.0f,
+													   });
+	std::vector<int> attributes = std::vector<int>({
+		3, 3, 2, 1
+												   });
+
+	selectedBlock = new Object3D(glm::vec3(0), cube_verts, attributes);
+	selectedBlock->SetShader(ShaderManager::AddShader("voxelSelected"));
+	selectedBlock->GetShader()->SetTextureUnit("texture1", 3);
+
+	currentBlock = (int)BlockIDs::DIRT;
+	float textureIndex[6];
+	for(int i = 0; i < 6; i++)
+		textureIndex[i] = BlockManager::GetBlockData((BlockIDs)currentBlock)->texture[i];
+	selectedBlock->GetShader()->SetFloatArray("faceIndex", 6, *textureIndex);
 }

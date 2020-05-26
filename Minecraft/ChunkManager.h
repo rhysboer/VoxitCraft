@@ -38,9 +38,6 @@ public:
 	void SetBlock(const glm::vec3& worldPosition, const BlockIDs& block);
 	void SetBlocks(const std::vector<glm::vec3>& positions, std::vector<BlockIDs>& blocks);
 
-	TileMap& GetTileMapTerrain() const;
-	TileMap& GetTileMapWater() const;
-
 	friend Chunk;
 
 public: // Private
@@ -66,9 +63,6 @@ private:
 
 	std::unordered_map<glm::ivec2, Chunk*> chunks = std::unordered_map <glm::ivec2, Chunk*>();
 	Chunk* cacheChunk = nullptr;
-
-	TileMap* terrainTexture;
-	TileMap* waterTexture;
 
 	Shader* solidShader;
 	Shader* waterShader;

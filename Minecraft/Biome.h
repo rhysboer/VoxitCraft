@@ -19,7 +19,6 @@ class Biome {
 public:
 
 	virtual BlockIDs GetBlock(const int& height) const = 0;
-	virtual void AddStructure(Chunk& chunk, const glm::vec3& position) const = 0;
 	virtual void AddStructure(const glm::vec3& position, std::array<BlockIDs, Chunk::CHUNK_MASS>& chunkBlocks, std::vector<glm::vec3>& outPos, std::vector<BlockIDs>& outBlocks) { };
 
 	void GetHeightMap(std::array<float, Chunk::CHUNK_SLICE>& heightMap, const Chunk& chunk);

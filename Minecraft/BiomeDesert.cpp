@@ -16,6 +16,7 @@ BlockIDs BiomeDesert::GetBlock(const int& height) const {
 	return BlockIDs::AIR;
 }
 
+/*
 void BiomeDesert::AddStructure(Chunk& chunk, const glm::vec3& position) const {
 	const int height = (rand() % 4) + 3;
 
@@ -23,3 +24,4 @@ void BiomeDesert::AddStructure(Chunk& chunk, const glm::vec3& position) const {
 		chunk.SetBlock(position.x, position.y + i, position.z, BlockIDs::CACTUS);
 	}	
 }
+*/
