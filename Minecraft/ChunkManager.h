@@ -30,6 +30,9 @@ public:
 	BlockIDs GetBlock(const float& x, const float& y, const float& z);
 	BlockIDs GetBlock(const glm::vec3& worldPosition);
 
+	// Locks the chunk and returns block ID in world position
+	BlockIDs GetBlockLock(const float& x, const float& y, const float& z);
+
 	// Returns blocks inside area that are solid
 	void GetSolidBlocksInArea(const glm::vec3& worldPosition, const glm::vec3& size, std::vector<glm::vec3>& output);
 
@@ -55,7 +58,7 @@ public: // Private
 	Chunk* FindChunk(const float& x, const float& z);
 
 private:
-	unsigned int RENDERING_DISTANCE = 12;
+	unsigned int RENDERING_DISTANCE = 4;
 	unsigned int DESTROY_DISTANCE = RENDERING_DISTANCE + 5;
 	
 	// Find a chunk that locks the mutex

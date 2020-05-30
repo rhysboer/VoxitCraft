@@ -84,7 +84,7 @@ Ray::RayHit Ray::RaycastFromCamera(const float& distance, BaseCamera& camera) {
 			}
 		}
 
-		BlockIDs block = World::GetChunkManager().GetBlock(pos);
+		BlockIDs block = World::GetChunkManager().GetBlockLock(pos.x, pos.y, pos.z);
 		
 		if(pos.y < 0)
 			break;

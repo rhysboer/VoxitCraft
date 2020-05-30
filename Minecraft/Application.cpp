@@ -94,7 +94,9 @@ void Application::OnEnd() {
 	
 	delete blockHighlight;
 	delete camera2D;
-	delete selectedBlock;
+
+	for(int i = 0; i < 3; i++)
+		delete selectedBlock[i];
 
 	delete framebuffer;
 	delete blockBuffer;
@@ -122,7 +124,7 @@ void Application::OnUpdate() {
 		for(int i = 0; i < 6; i++)
 			textureIndex[i] = BlockManager::GetBlockData((BlockIDs)currentBlock)->texture[i];
 	
-		selectedBlock->GetShader()->SetFloatArray("faceIndex", 6, *textureIndex);
+		blockShader->SetFloatArray("faceIndex", 6, *textureIndex);
 	}
 
 	world->Update();
@@ -152,10 +154,13 @@ void Application::OnRender() {
 	// Selecteed Block Renderer
 	glClearColor(0, 0, 0, 0);
 	blockBuffer->Render_Begin();
-	selectedBlock->GetTransform().RotateY(Time::DeltaTime() * 30.0f);
-	selectedBlock->Render(*camera2D);
-	blockBuffer->Render_End();
+
+	// Render Block 
+	BlockData const* block = BlockManager::GetBlockData((BlockIDs)currentBlock);
+	selectedBlock[(int)block->meshType]->GetTransform().RotateY(Time::DeltaTime() * 30.0f);
+	selectedBlock[(int)block->meshType]->Render(*camera2D);
 	
+	blockBuffer->Render_End();
 	
 	// GUI
 	glm::vec2 size = Engine::GetWindowSize();
@@ -174,73 +179,180 @@ void Application::OnRender() {
 }
 
 void Application::SetupObjects() {
-	// Current block being held
-	std::vector<float> cube_verts = std::vector<float>({
-		// BACK
-		 1.0f,-1.0f, 1.0f,		 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-	    -1.0f,-1.0f, 1.0f,		 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-		 1.0f, 1.0f, 1.0f,		 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-		
-		-1.0f, 1.0f, 1.0f,		 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-		 1.0f, 1.0f, 1.0f,		 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-		-1.0f,-1.0f, 1.0f,		 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+	// Block Vertes
+	std::vector<float> cube_verts = std::vector<float>(
+		{
+			// BACK
+			 1.0f,-1.0f, 1.0f,		 0.0f, 0.0f, 1.0f,	 1.0f, 1.0f,	 0.0f,
+			-1.0f,-1.0f, 1.0f,		 0.0f, 0.0f, 1.0f,	 0.0f, 1.0f,	 0.0f,
+			 1.0f, 1.0f, 1.0f,		 0.0f, 0.0f, 1.0f,	 1.0f, 0.0f,	 0.0f,
 
-		// RIGHT				
-		1.0f,-1.0f,-1.0f,		 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f,		 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-		1.0f, 1.0f,-1.0f,		 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-		
-		1.0f, 1.0f, 1.0f,		 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-		1.0f, 1.0f,-1.0f,		 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-		1.0f,-1.0f, 1.0f,		 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+			-1.0f, 1.0f, 1.0f,		 0.0f, 0.0f, 1.0f,	 0.0f, 0.0f,	 0.0f,
+			 1.0f, 1.0f, 1.0f,		 0.0f, 0.0f, 1.0f,	 1.0f, 0.0f,	 0.0f,
+			-1.0f,-1.0f, 1.0f,		 0.0f, 0.0f, 1.0f,	 0.0f, 1.0f,	 0.0f,
 
-		// FRONT				
-		-1.0f,-1.0f,-1.0f,		 0.0f, 0.0f,-1.0f, 1.0f, 1.0f, 2.0f,
-		 1.0f,-1.0f,-1.0f,		 0.0f, 0.0f,-1.0f, 0.0f, 1.0f, 2.0f,
-		-1.0f, 1.0f,-1.0f,		 0.0f, 0.0f,-1.0f, 1.0f, 0.0f, 2.0f,
+			// RIGHT				
+			1.0f,-1.0f,-1.0f,		 1.0f, 0.0f, 0.0f,	 1.0f, 1.0f,	 1.0f,
+			1.0f,-1.0f, 1.0f,		 1.0f, 0.0f, 0.0f,	 0.0f, 1.0f,	 1.0f,
+			1.0f, 1.0f,-1.0f,		 1.0f, 0.0f, 0.0f,	 1.0f, 0.0f,	 1.0f,
 
-		 1.0f, 1.0f,-1.0f,		 0.0f, 0.0f,-1.0f, 0.0f, 0.0f, 2.0f,
-		-1.0f, 1.0f,-1.0f,		 0.0f, 0.0f,-1.0f, 1.0f, 0.0f, 2.0f,
-		 1.0f,-1.0f,-1.0f,		 0.0f, 0.0f,-1.0f, 0.0f, 1.0f, 2.0f,
+			1.0f, 1.0f, 1.0f,		 1.0f, 0.0f, 0.0f,	 0.0f, 0.0f,	 1.0f,
+			1.0f, 1.0f,-1.0f,		 1.0f, 0.0f, 0.0f,	 1.0f, 0.0f,	 1.0f,
+			1.0f,-1.0f, 1.0f,		 1.0f, 0.0f, 0.0f,	 0.0f, 1.0f,	 1.0f,
 
-		  //LEFT DONE			
-		-1.0f,-1.0f, 1.0f,		-1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 3.0f,
-		-1.0f,-1.0f,-1.0f,		-1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 3.0f,
-		-1.0f, 1.0f, 1.0f,		-1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 3.0f,
+			// FRONT				
+			-1.0f,-1.0f,-1.0f,		 0.0f, 0.0f,-1.0f,	 1.0f, 1.0f,	 2.0f,
+			 1.0f,-1.0f,-1.0f,		 0.0f, 0.0f,-1.0f,	 0.0f, 1.0f,	 2.0f,
+			-1.0f, 1.0f,-1.0f,		 0.0f, 0.0f,-1.0f,	 1.0f, 0.0f,	 2.0f,
 
-		-1.0f, 1.0f,-1.0f,		-1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 3.0f,
-		-1.0f, 1.0f, 1.0f,		-1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 3.0f,
-		-1.0f,-1.0f,-1.0f,		-1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 3.0f,
+			 1.0f, 1.0f,-1.0f,		 0.0f, 0.0f,-1.0f,	 0.0f, 0.0f,	 2.0f,
+			-1.0f, 1.0f,-1.0f,		 0.0f, 0.0f,-1.0f,	 1.0f, 0.0f,	 2.0f,
+			 1.0f,-1.0f,-1.0f,		 0.0f, 0.0f,-1.0f,	 0.0f, 1.0f,	 2.0f,
 
-	  // TOP					
-		-1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 4.0f,
-		-1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 4.0f,
-		 1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 4.0f,
+			 //LEFT DONE			
+			 -1.0f,-1.0f, 1.0f,		-1.0f, 0.0f, 0.0f,	 1.0f, 1.0f,	 3.0f,
+			 -1.0f,-1.0f,-1.0f,		-1.0f, 0.0f, 0.0f,	 0.0f, 1.0f,	 3.0f,
+			 -1.0f, 1.0f, 1.0f,		-1.0f, 0.0f, 0.0f,	 1.0f, 0.0f,	 3.0f,
 
-		 1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 4.0f,
-		 1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 4.0f,
-		-1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 4.0f,
+			 -1.0f, 1.0f,-1.0f,		-1.0f, 0.0f, 0.0f,	 0.0f, 0.0f,	 3.0f,
+			 -1.0f, 1.0f, 1.0f,		-1.0f, 0.0f, 0.0f,	 1.0f, 0.0f,	 3.0f,
+			 -1.0f,-1.0f,-1.0f,		-1.0f, 0.0f, 0.0f,	 0.0f, 1.0f,	 3.0f,
 
-	 // BOT				
-		-1.0f,-1.0f,-1.0f,		 0.0f,-1.0f, 0.0f, 0.0f, 0.0f, 5.0f,
-		-1.0f,-1.0f, 1.0f,		 0.0f,-1.0f, 0.0f, 0.0f, 1.0f, 5.0f,
-		 1.0f,-1.0f,-1.0f,		 0.0f,-1.0f, 0.0f, 1.0f, 0.0f, 5.0f,
+			// TOP					
+			-1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f,	 0.0f, 0.0f,	 4.0f,
+			-1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f,	 0.0f, 1.0f,	 4.0f,
+			 1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f,	 1.0f, 0.0f,	 4.0f,
 
-		 1.0f,-1.0f, 1.0f,		 0.0f,-1.0f, 0.0f, 1.0f, 1.0f, 5.0f,
-		 1.0f,-1.0f,-1.0f,		 0.0f,-1.0f, 0.0f, 1.0f, 0.0f, 5.0f,
-		-1.0f,-1.0f, 1.0f,		 0.0f,-1.0f, 0.0f, 0.0f, 1.0f, 5.0f,
-													   });
+			 1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f,	 1.0f, 1.0f,	 4.0f,
+			 1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f,	 1.0f, 0.0f,	 4.0f,
+			-1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f,	 0.0f, 1.0f,	 4.0f,
+
+			 // BOT				
+			-1.0f,-1.0f,-1.0f,		 0.0f,-1.0f, 0.0f,	 0.0f, 0.0f,	 5.0f,
+			-1.0f,-1.0f, 1.0f,		 0.0f,-1.0f, 0.0f,	 0.0f, 1.0f,	 5.0f,
+			 1.0f,-1.0f,-1.0f,		 0.0f,-1.0f, 0.0f,	 1.0f, 0.0f,	 5.0f,
+
+			 1.0f,-1.0f, 1.0f,		 0.0f,-1.0f, 0.0f,	 1.0f, 1.0f,	 5.0f,
+			 1.0f,-1.0f,-1.0f,		 0.0f,-1.0f, 0.0f,	 1.0f, 0.0f,	 5.0f,
+			-1.0f,-1.0f, 1.0f,		 0.0f,-1.0f, 0.0f,	 0.0f, 1.0f,	 5.0f,
+		}
+	);
+	std::vector<float> water_verts = std::vector<float>(
+		{
+			// BACK
+			 1.0f,-1.0f, 1.0f,		 0.0f, 0.0f, 1.0f,	 1.0f, 1.0f,	 0.0f,
+			-1.0f,-1.0f, 1.0f,		 0.0f, 0.0f, 1.0f,	 0.0f, 1.0f,	 0.0f,
+			 1.0f, 1.0f, 1.0f,		 0.0f, 0.0f, 1.0f,	 1.0f, 0.0f,	 0.0f,
+
+			-1.0f, 1.0f, 1.0f,		 0.0f, 0.0f, 1.0f,	 0.0f, 0.0f,	 0.0f,
+			 1.0f, 1.0f, 1.0f,		 0.0f, 0.0f, 1.0f,	 1.0f, 0.0f,	 0.0f,
+			-1.0f,-1.0f, 1.0f,		 0.0f, 0.0f, 1.0f,	 0.0f, 1.0f,	 0.0f,
+
+			// RIGHT				
+			1.0f,-1.0f,-1.0f,		 1.0f, 0.0f, 0.0f,	 1.0f, 1.0f,	 1.0f,
+			1.0f,-1.0f, 1.0f,		 1.0f, 0.0f, 0.0f,	 0.0f, 1.0f,	 1.0f,
+			1.0f, 1.0f,-1.0f,		 1.0f, 0.0f, 0.0f,	 1.0f, 0.0f,	 1.0f,
+
+			1.0f, 1.0f, 1.0f,		 1.0f, 0.0f, 0.0f,	 0.0f, 0.0f,	 1.0f,
+			1.0f, 1.0f,-1.0f,		 1.0f, 0.0f, 0.0f,	 1.0f, 0.0f,	 1.0f,
+			1.0f,-1.0f, 1.0f,		 1.0f, 0.0f, 0.0f,	 0.0f, 1.0f,	 1.0f,
+
+			// FRONT				
+			-1.0f,-1.0f,-1.0f,		 0.0f, 0.0f,-1.0f,	 1.0f, 1.0f,	 2.0f,
+			 1.0f,-1.0f,-1.0f,		 0.0f, 0.0f,-1.0f,	 0.0f, 1.0f,	 2.0f,
+			-1.0f, 1.0f,-1.0f,		 0.0f, 0.0f,-1.0f,	 1.0f, 0.0f,	 2.0f,
+
+			 1.0f, 1.0f,-1.0f,		 0.0f, 0.0f,-1.0f,	 0.0f, 0.0f,	 2.0f,
+			-1.0f, 1.0f,-1.0f,		 0.0f, 0.0f,-1.0f,	 1.0f, 0.0f,	 2.0f,
+			 1.0f,-1.0f,-1.0f,		 0.0f, 0.0f,-1.0f,	 0.0f, 1.0f,	 2.0f,
+
+			 //LEFT DONE			
+			 -1.0f,-1.0f, 1.0f,		-1.0f, 0.0f, 0.0f,	 1.0f, 1.0f,	 3.0f,
+			 -1.0f,-1.0f,-1.0f,		-1.0f, 0.0f, 0.0f,	 0.0f, 1.0f,	 3.0f,
+			 -1.0f, 1.0f, 1.0f,		-1.0f, 0.0f, 0.0f,	 1.0f, 0.0f,	 3.0f,
+
+			 -1.0f, 1.0f,-1.0f,		-1.0f, 0.0f, 0.0f,	 0.0f, 0.0f,	 3.0f,
+			 -1.0f, 1.0f, 1.0f,		-1.0f, 0.0f, 0.0f,	 1.0f, 0.0f,	 3.0f,
+			 -1.0f,-1.0f,-1.0f,		-1.0f, 0.0f, 0.0f,	 0.0f, 1.0f,	 3.0f,
+
+			 // TOP					
+			 -1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f,	 0.0f, 0.0f,	 4.0f,
+			 -1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f,	 0.0f, 1.0f,	 4.0f,
+			  1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f,	 1.0f, 0.0f,	 4.0f,
+
+			  1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f,	 1.0f, 1.0f,	 4.0f,
+			  1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f,	 1.0f, 0.0f,	 4.0f,
+			 -1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f,	 0.0f, 1.0f,	 4.0f,
+
+			 // BOT				
+			-1.0f,-1.0f,-1.0f,		 0.0f,-1.0f, 0.0f,	 0.0f, 0.0f,	 5.0f,
+			-1.0f,-1.0f, 1.0f,		 0.0f,-1.0f, 0.0f,	 0.0f, 1.0f,	 5.0f,
+			 1.0f,-1.0f,-1.0f,		 0.0f,-1.0f, 0.0f,	 1.0f, 0.0f,	 5.0f,
+
+			 1.0f,-1.0f, 1.0f,		 0.0f,-1.0f, 0.0f,	 1.0f, 1.0f,	 5.0f,
+			 1.0f,-1.0f,-1.0f,		 0.0f,-1.0f, 0.0f,	 1.0f, 0.0f,	 5.0f,
+			-1.0f,-1.0f, 1.0f,		 0.0f,-1.0f, 0.0f,	 0.0f, 1.0f,	 5.0f,
+		}
+	);
+	std::vector<float> x_verts = std::vector<float>(
+		{
+			0.8535f, -1.0f, 0.8535,		0.0f, 1.0f, 0.0f,	0.0f, 1.0f,		0.0f,
+			-0.8535f, -1.0f, -0.8535f,	0.0f, 1.0f, 0.0f,	1.0f, 1.0f,		0.0f,
+			-0.8535, 1.0f, -0.8535f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		0.0f,
+
+			0.8535f, -1.0f, 0.8535f,	0.0f, 1.0f, 0.0f,	0.0f, 1.0f,		1.0f,
+			-0.8535f, 1.0f, -0.8535f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		1.0f,
+			0.8535f, 1.0f, 0.8535f,		0.0f, 1.0f, 0.0f,	0.0f, 0.0f,		1.0f,
+
+			0.8535f, -1.0f, 0.8535,		0.0f, 1.0f, 0.0f,	0.0f, 1.0f,		0.0f,
+			-0.8535, 1.0f, -0.8535f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		0.0f,
+			-0.8535f, -1.0f, -0.8535f,	0.0f, 1.0f, 0.0f,	1.0f, 1.0f,		0.0f,
+
+			0.8535f, -1.0f, 0.8535f,	0.0f, 1.0f, 0.0f,	0.0f, 1.0f,		1.0f,
+			0.8535f, 1.0f, 0.8535f,		0.0f, 1.0f, 0.0f,	0.0f, 0.0f,		1.0f,
+			-0.8535f, 1.0f, -0.8535f,	0.0f, 1.0f, 0.0f,	1.0f, 0.0f,		1.0f,
+
+
+
+			-0.8535f,-1.0f, 0.8535f,	0.0, 1.0f, 0.0f,	0.0f, 1.0f,		2.0f,
+			-0.8535f, 1.0f, 0.8535f,	0.0, 1.0f, 0.0f,	0.0f, 0.0f,		2.0f,
+			0.8535f, 1.0f, -0.8535f,	0.0, 1.0f, 0.0f,	1.0f, 0.0f,		2.0f,
+			
+			-0.8535f, -1.0f, 0.8535f,	0.0, 1.0f, 0.0f,	0.0f, 1.0f,		3.0f,
+			0.8535f, 1.0f, -0.8535f,	0.0, 1.0f, 0.0f,	1.0f, 0.0f,		3.0f,
+			0.8535f, -1.0f, -0.8535f,	0.0, 1.0f, 0.0f,	1.0f, 1.0f,		3.0f,
+			
+			-0.8535f,-1.0f, 0.8535f,	0.0, 1.0f, 0.0f,	0.0f, 1.0f,		2.0f,
+			0.8535f, 1.0f, -0.8535f,	0.0, 1.0f, 0.0f,	1.0f, 0.0f,		2.0f,
+			-0.8535f, 1.0f, 0.8535f,	0.0, 1.0f, 0.0f,	0.0f, 0.0f,		2.0f,
+
+			-0.8535f, -1.0f, 0.8535f,	0.0, 1.0f, 0.0f,	0.0f, 1.0f,		3.0f,
+			0.8535f, -1.0f, -0.8535f,	0.0, 1.0f, 0.0f,	1.0f, 1.0f,		3.0f,
+			0.8535f, 1.0f, -0.8535f,	0.0, 1.0f, 0.0f,	1.0f, 0.0f,		3.0f,
+
+		}
+	);
+
+	// Block Attributes
 	std::vector<int> attributes = std::vector<int>({
 		3, 3, 2, 1
-												   });
+	});
 
-	selectedBlock = new Object3D(glm::vec3(0), cube_verts, attributes);
-	selectedBlock->SetShader(ShaderManager::AddShader("voxelSelected"));
-	selectedBlock->GetShader()->SetTextureUnit("texture1", 3);
-
-	currentBlock = (int)BlockIDs::DIRT;
+	blockShader = ShaderManager::AddShader("voxelSelected");
 	float textureIndex[6];
 	for(int i = 0; i < 6; i++)
 		textureIndex[i] = BlockManager::GetBlockData((BlockIDs)currentBlock)->texture[i];
-	selectedBlock->GetShader()->SetFloatArray("faceIndex", 6, *textureIndex);
+	blockShader->SetFloatArray("faceIndex", 6, *textureIndex);
+	blockShader->SetTextureUnit("texture1", 3);
+
+	selectedBlock[0] = new Object3D(glm::vec3(0), cube_verts, attributes);
+	selectedBlock[0]->SetShader(blockShader);
+
+	selectedBlock[1] = new Object3D(glm::vec3(0), water_verts, attributes);
+	selectedBlock[1]->SetShader(blockShader);
+
+	selectedBlock[2] = new Object3D(glm::vec3(0), x_verts, attributes);
+	selectedBlock[2]->SetShader(blockShader);
+
+	currentBlock = (int)BlockIDs::DIRT;
 }

@@ -174,7 +174,7 @@ void BlockManager::LoadBlockDatabase() {
 	blocks.push_back(BlockData(BlockIDs::SAND, "Sand", false, true, true, TextureIndex(8, 8, 8, 8, 8, 8)));
 	blocks.push_back(BlockData(BlockIDs::SNOW_DIRT, "Snowy Dirt", false, true, true, TextureIndex(15, 15, 15, 15, 16, 0)));
 	blocks.push_back(BlockData(BlockIDs::WOOD_PLANKS, "Wooden Planks", false, true, true, TextureIndex(17, 17, 17, 17, 17, 17)));
-	blocks.push_back(BlockData(BlockIDs::MAGMA, "Magma", false, true, true, TextureIndex(18, 18, 18, 18, 18, 18)));
-	blocks.push_back(BlockData(BlockIDs::BUSH, "Bush", true, false, false, TextureIndex(10, 10, 10, 10, 0, 0), MeshType::X));
-	blocks.push_back(BlockData(BlockIDs::WATER, "Water", true, false, true, TextureIndex(0, 0, 0, 0, 0, 0), MeshType::LIQUID, SpriteSheet::WATER));	
+	blocks.push_back(BlockData(BlockIDs::MAGMA, "Magma", false, true, true, TextureIndex(18, 18, 18, 18, 18, 18), 15));
+	blocks.push_back(BlockData(BlockIDs::BUSH, "Bush", true, false, false, TextureIndex(10, 10, 10, 10, 0, 0), 0, MeshType::X));
+	blocks.push_back(BlockData(BlockIDs::WATER, "Water", true, false, true, TextureIndex(0, 0, 0, 0, 0, 0), 0, MeshType::LIQUID, SpriteSheet::WATER));	
 }

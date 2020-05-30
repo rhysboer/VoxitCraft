@@ -230,6 +230,11 @@ BlockIDs ChunkManager::GetBlock(const glm::vec3& worldPosition) {
 	return GetBlock(worldPosition.x, worldPosition.y, worldPosition.z);
 }
 
+BlockIDs ChunkManager::GetBlockLock(const float& x, const float& y, const float& z) {
+	std::unique_lock<std::mutex> lock(mutex);
+	return GetBlock(x, y, z);
+}
+
 void ChunkManager::SetBlock(const glm::vec3& worldPosition, const BlockIDs& block) {
 	return SetBlock(worldPosition.x, worldPosition.y, worldPosition.z, block);
 }

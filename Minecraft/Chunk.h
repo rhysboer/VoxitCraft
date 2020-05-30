@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <queue>
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 #include "BlockManager.h"
@@ -112,6 +113,51 @@ public: // private
 	// 
 	bool NeighbourSlices(const unsigned int& y);
 
+
+	// LIGHTING
+	struct LightNode {
+		LightNode(short _index, Chunk* _chunk) : index(_index), chunk(_chunk) 
+		{ }
+
+		short index;
+		Chunk* chunk;
+	};
+
+
+	void CalculateLight();
+
+	inline int GetSunlight(const int& x, const int& y, const int& z);
+	inline void SetSunlight(const int& x, const int& y, const int& z, const int& level);
+	inline int GetLight(const int& x, const int& y, const int& z) {
+		return lightMap[y][z][x] & 0xF;
+	}
+	// Get Light in sourrounding neighbours, will return 0 if neighbour is null
+	inline int GetLightNeighbourHood(const int& x, const int& y, const int& z) {
+		Chunk* chunk = this;
+
+		// Reverse sides
+		if(x >= CHUNK_SIZE)	chunk = neighbourChunks[(int)NEIGHBOUR::RIGHT];
+		else if(x < 0)		chunk = neighbourChunks[(int)NEIGHBOUR::LEFT];
+		else if(z >= CHUNK_SIZE)	chunk = neighbourChunks[(int)NEIGHBOUR::FRONT];
+		else if(z < 0)				chunk = neighbourChunks[(int)NEIGHBOUR::BACK];
+		else if(x < 0 && z < 0)				chunk = neighbourChunks[(int)NEIGHBOUR::BACK_LEFT];
+		else if(x >= CHUNK_SIZE && z < 0)	chunk = neighbourChunks[(int)NEIGHBOUR::BACK_RIGHT];
+		else if(x < 0 && z >= CHUNK_SIZE)			chunk = neighbourChunks[(int)NEIGHBOUR::FRONT_LEFT];
+		else if(x >= CHUNK_SIZE && z >= CHUNK_SIZE)	chunk = neighbourChunks[(int)NEIGHBOUR::FRONT_RIGHT];
+
+		if(chunk == nullptr)
+			return 0;
+
+		return chunk->GetLight(Math::Modulo(x, CHUNK_SIZE), glm::clamp(y, 0, CHUNK_HEIGHT - 1), Math::Modulo(z, CHUNK_SIZE));
+	}
+	inline void SetLight(const int& x, const int& y, const int& z, const int& level) {
+		if(x < 0 || x >= CHUNK_SIZE || y < 0 || y >= CHUNK_HEIGHT || z < 0 || z >= CHUNK_HEIGHT)
+			return;
+
+		lightMap[y][z][x] = (lightMap[x][y][z] & 0xF0) | level;
+	}
+
+
 public: // Private
 
 	// Chunk Data
@@ -131,16 +177,11 @@ public: // Private
 	bool hasWorldData; // Has generated world data
 	AABB* aabb; // Used for frustum culling chunk
 
-	/*
-		LEFT, // X-
-		RIGHT, // X+
-		FRONT, // Z+
-		BACK, // Z-
-		FRONT_LEFT, // X-, Z+
-		FRONT_RIGHT, // X+, Z+
-		BACK_LEFT, // X-, Z-
-		BACK_RIGHT // X+, Z-
-	*/
+	// LIGHTING
+	unsigned char lightMap[CHUNK_HEIGHT][CHUNK_SIZE][CHUNK_SIZE];
+	std::queue<LightNode> lightQueue = std::queue<LightNode>();
+
+	// Neighbours
 	const glm::ivec2 neighbourOffsets[8] = { 
 		{-1, 0}, {1, 0}, {0, 1}, {0, -1},
 		{-1, 1}, {1, 1}, {-1, -1}, {1, -1}

@@ -44,8 +44,8 @@ private:
 	
 	// Held Block Preview
 	Framebuffer* blockBuffer;
-	Object3D* selectedBlockModels[3];
-	Object3D* selectedBlock;
+	Object3D* selectedBlock[3];
+	Shader* blockShader;
 	BaseCamera* camera2D;
 
 	// Block Highlighting

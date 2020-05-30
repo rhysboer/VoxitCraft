@@ -91,14 +91,22 @@ void EntityPlayer::OnUpdate() {
 		}
 	}
 
+	Ray::RayHit hit = Ray::RaycastFromCamera(10.0f, *camera);
+	
+
 	ImGui::Begin("Info");
 	ImGui::Text("Position: X:%f, Y:%f, Z:%f", model->GetPosition().x, model->GetPosition().y, model->GetPosition().z);
 	ImGui::Text("Facing Direction: X:%i, Y:%i, Z:%i", (int)glm::round(camera->Forward().x), (int)glm::round(camera->Forward().y), (int)glm::round(camera->Forward().z));
-	ImGui::Text("Chunk: %f, %f", glm::floor(model->GetPosition().x / 16.0f), glm::floor(model->GetPosition().z / 16.0f));
+	ImGui::Text("Chunk: %i, %i", (int)glm::floor(model->GetPosition().x / 16.0f), (int)glm::floor(model->GetPosition().z / 16.0f));
 	ImGui::Text("Local Block: X:%i, Y:%i, Z:%i",
 				Math::Modulo((int)glm::floor(model->GetPosition().x), Chunk::CHUNK_SIZE),
 				Math::Modulo((int)glm::floor(model->GetPosition().y), Chunk::CHUNK_SIZE),
 				Math::Modulo((int)glm::floor(model->GetPosition().z), Chunk::CHUNK_SIZE));
+	ImGui::Text("Looking At Pos: X:%i, Y:%i, Z:%i",
+				(int)hit.hitPosition.x,
+				(int)hit.hitPosition.y,
+				(int)hit.hitPosition.z);
+	ImGui::Text("Light Level: %i", (hit.hit == true) ? World::GetChunkManager().FindChunk(hit.neighbourPosition)->GetLight(Math::Modulo(hit.neighbourPosition.x, Chunk::CHUNK_SIZE), hit.neighbourPosition.y, Math::Modulo(hit.neighbourPosition.z, Chunk::CHUNK_SIZE)) : 0);
 	ImGui::End();
 
 	// Crosshair

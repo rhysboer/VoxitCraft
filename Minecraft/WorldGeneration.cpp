@@ -13,82 +13,6 @@ WorldGeneration::~WorldGeneration() {
 	delete snow;
 }
 
-/*
-void WorldGeneration::CreateChunkWorldData(Chunk& chunk) {
-	if(chunk.hasWorldData)
-		return;
-	
-	std::vector<glm::vec3> treePositions = std::vector<glm::vec3>();
-	treePositions.reserve(10);
-
-	CreateBiomeMap(chunk);
-	GetHeightMap(chunk, heightMap);
-
-	// OPTIMIZE THIS
-	glm::vec2 coords;
-	for(int z = 0; z < 16; z++) {
-		for(int x = 0; x < 16; x++) {
-			coords = glm::vec2((x + chunk.worldCoord.x) / 512.0f, (z + chunk.worldCoord.z) / 512.0f );
-			heightMap[(z * 16) + x] += (glm::simplex(coords)) * 20;
-		}
-	}
-
-
-	int maxHeight = glm::max((*std::max_element(heightMap.begin(), heightMap.end())) + 1, waterLevel);
-	for(int y = 0; y < maxHeight; y++) {
-		for(int z = 0; z < Chunk::CHUNK_SIZE; z++) {
-			for(int x = 0; x < Chunk::CHUNK_SIZE; x++) {
-				int blockIndex = (y * Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE) + (z * Chunk::CHUNK_SIZE) + x;
-				
-				int mapHeight = (int)heightMap[(z * Chunk::CHUNK_SIZE) + x];
-				float height = y - mapHeight;
-
-				Biome* biome = GetBiome(x, z);
-				BlockIDs block = biome->GetBlock(height);
-
-				if(y == 0)
-					chunk.SetBlock(blockIndex, BlockIDs::GRASS);
-
-				//if(x == 0 || x == Chunk::CHUNK_SIZE || z == 0 || z == Chunk::CHUNK_SIZE)
-				//	chunk.SetBlock(blockIndex, BlockIDs::DIRT);
-				//
-				//if(x == 0 || x == Chunk::CHUNK_SIZE || z == 0 || z == Chunk::CHUNK_SIZE)
-				//	continue;
-				
-				// Water
-				//if(y < 16 && height == 0) {
-				//	chunk.SetBlock(blockIndex, BlockIDs::SAND);
-				//} else if(y > mapHeight && y < 15) {
-				//	chunk.SetBlock(blockIndex, BlockIDs::WATER);
-				//} else if(chunk.blocks[blockIndex] == BlockIDs::AIR) {
-				//	chunk.SetBlock(blockIndex, block);
-				//}
-				//
-				//if(height == 1 && y > waterLevel) {
-				//	if(biome->GetGenerationParameters().structureDensity <= 0) 
-				//		continue;
-				//	
-				//	if(rand() % biome->GetGenerationParameters().structureDensity == 1) {
-				//		treePositions.emplace_back(x, y, z);
-				//	}
-				//}
-			}
-		}
-	}
-
-	for(int i = 0; i < treePositions.size(); i++) {
-		Biome* biome = GetBiome(treePositions[i].x, treePositions[i].z);
-	
-		if(biome != nullptr) {
-			biome->AddStructure(chunk, treePositions[i] + chunk.worldCoord);
-		}
-	}
-
-	chunk.hasWorldData = true;
-	chunk.isDirty = true;
-}
-*/
-
 unsigned int WorldGeneration::CreateChunkWorldData(const Chunk& chunk, std::array<BlockIDs, Chunk::CHUNK_MASS>& data, std::vector<glm::vec3>& structurePos, std::vector<BlockIDs>& structureBlocks) {
 	if(chunk.hasWorldData)
 		return 0;
@@ -124,7 +48,9 @@ unsigned int WorldGeneration::CreateChunkWorldData(const Chunk& chunk, std::arra
 				if(y == 0)
 					data[blockIndex] = BlockIDs::GRASS;	//chunk.SetBlock(blockIndex, BlockIDs::GRASS);
 
-				data[blockIndex] = block;
+				// Semi Flat
+				//if(mapHeight < 5)
+				//	data[blockIndex] = block;
 
 				// Water
 				if(y < 16 && height == 0) {
