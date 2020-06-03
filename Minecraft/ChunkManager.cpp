@@ -5,8 +5,9 @@ ChunkManager::ChunkManager() {
 	solidShader = ShaderManager::AddShader("voxel", ShaderManager::ShaderType::GRAPHIC);
 	waterShader = ShaderManager::AddShader("water", ShaderManager::ShaderType::GRAPHIC);
 
-	solidShader->SetInt("texture1", 3);
-	waterShader->SetInt("texture1", 0);
+	solidShader->SetTextureUnit("terrainTexture", 3);
+	solidShader->SetTextureUnit("bloomTexture", 4);
+	waterShader->SetTextureUnit("texture1", 0);
 
 	chunkGenerationThread = new std::thread(&ChunkManager::ChunkLoader, this);
 
@@ -123,6 +124,7 @@ void ChunkManager::Render(BaseCamera& camera) {
 
 	// Solid Rendering
 	BlockManager::GetTileMap(SpriteSheet::BLOCK)->BindTexture(3);
+	BlockManager::GetTileMap(SpriteSheet::BLOOM)->BindTexture(4);
 	solidShader->SetMatrix4("projectionView", camera.ProjectionView());
 
 	int renderCount = 0;

@@ -1,16 +1,19 @@
 #version 330 core
+layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec4 BloomColor;
 
 // UP
 const float light[4] = float[](1.0, 0.8, 0.6, 0.3);
 
-uniform sampler2D texture1;
+//out vec4 FragColor;
+
+uniform sampler2D terrainTexture;
+uniform sampler2D bloomTexture;
 
 in vec2 _texCoords;
 in vec3 _normals;
 in float _ambient;
 in vec2 _light;
-
-out vec4 FragColor;
 
 float GetFaceLight(vec3 normal){
 	if(normal.x != 0.0)
@@ -25,7 +28,11 @@ float GetFaceLight(vec3 normal){
 
 void main()
 {
-	vec4 sample = texture(texture1, _texCoords);
+	// Bloom
+	BloomColor = texture(bloomTexture, _texCoords);
+
+	// Terrain
+	vec4 sample = texture(terrainTexture, _texCoords);
 	if(sample.a < 0.5)
 		discard;
 

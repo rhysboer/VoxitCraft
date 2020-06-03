@@ -30,7 +30,7 @@ public:
 
 	void Render(const glm::mat4& projectionView);
 	void Render(BaseCamera& camera);
-	void RawRender(BaseCamera& camera);
+	void RawRender();
 	void BindVAO() const;
 	void BindVBO() const;
 

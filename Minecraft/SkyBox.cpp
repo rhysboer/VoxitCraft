@@ -80,6 +80,6 @@ void SkyBox::Render(BaseCamera& camera) {
 	cube->GetShader()->SetMatrix4("view", glm::mat4(glm::mat3(camera.View())));
 
 	glDepthMask(GL_FALSE);
-	cube->RawRender(camera);
+	cube->RawRender();
 	glDepthMask(GL_TRUE);
 }

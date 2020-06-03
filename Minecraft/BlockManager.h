@@ -29,7 +29,8 @@ enum class BlockIDs {
 
 enum class SpriteSheet {
 	BLOCK,
-	WATER
+	WATER,
+	BLOOM
 };
 
 enum class MeshType {
@@ -128,6 +129,7 @@ private:
 
 	static TileMap* blockTexture;
 	static TileMap* waterTexture;
+	static TileMap* bloomTexture;
 
 	static std::vector<BlockData> blocks;
 

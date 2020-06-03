@@ -1,17 +1,21 @@
 #include "Framebuffer.h"
 
-Framebuffer::Framebuffer(const glm::vec2& size, const FramebufferType& type) : framebufferSize(size), viewportSize(0), fbo(0), rbo(0), colourTexture(0), depthTexture(0) {
+Framebuffer::Framebuffer(const glm::vec2& size, const FramebufferType& type, unsigned int colourAttachments)
+	: framebufferSize(size), viewportSize(0), fbo(0), rbo(0), colourTexture(0), depthTexture(0), totalColourAttachments(colourAttachments)
+{
 	/*
 		Use renderbuffer for depth if you dont need to sample it later in a shader, but otherwise use a texture for depth so we can use it for sampling
 	*/
 	this->type = type;
 
-	CreateFramebuffer();
+	CreateFramebuffer(colourAttachments);
 }
 
 Framebuffer::~Framebuffer() {
 	// Delete Textures
-	glDeleteTextures(1, &colourTexture);
+	for(int i = 0; i < colourTexture.size(); i++) {
+		glDeleteTextures(1, &colourTexture[i]);
+	}
 	glDeleteTextures(1, &depthTexture);
 
 	// Delete Buffers
@@ -35,38 +39,28 @@ void Framebuffer::Render_End() {
 	glViewport(0, 0, this->viewportSize.x, this->viewportSize.y);
 }
 
+void Framebuffer::Bind() {
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+}
+
 void Framebuffer::SetSize(const glm::vec2& size) {
 	this->framebufferSize = size;
 
-	glDeleteTextures(1, &colourTexture);
+	for(int i = 0; i < colourTexture.size(); i++) {
+		glDeleteTextures(1, &colourTexture[i]);
+	}
 	glDeleteTextures(1, &depthTexture);
 
 	glDeleteFramebuffers(1, &fbo);
 	glDeleteRenderbuffers(1, &rbo);
 
-	CreateFramebuffer();
+	CreateFramebuffer(totalColourAttachments);
 }
 
-void Framebuffer::BindTextures(const unsigned int& index) const {
-	if(type == FramebufferType::COLOUR) {
+void Framebuffer::BindTextureColour(const unsigned int& texture, const unsigned int& index) const {
+	if(!colourTexture.empty() && texture < colourTexture.size()) {
 		glActiveTexture(GL_TEXTURE0 + index);
-		glBindTexture(GL_TEXTURE_2D, colourTexture);
-	} else if(type == FramebufferType::DEPTH) {
-		glActiveTexture(GL_TEXTURE0 + index);
-		glBindTexture(GL_TEXTURE_2D, depthTexture);
-	} else if(type == FramebufferType::COLOUR_AND_DEPTH) {
-		glActiveTexture(GL_TEXTURE0 + index);
-		glBindTexture(GL_TEXTURE_2D, colourTexture);
-
-		glActiveTexture(GL_TEXTURE0 + index + 1);
-		glBindTexture(GL_TEXTURE_2D, depthTexture);
-	}
-}
-
-void Framebuffer::BindTextureColour(const unsigned int& index) const {
-	if(colourTexture != 0) {
-		glActiveTexture(GL_TEXTURE0 + index);
-		glBindTexture(GL_TEXTURE_2D, colourTexture);
+		glBindTexture(GL_TEXTURE_2D, colourTexture[texture]);
 	}
 }
 
@@ -77,36 +71,49 @@ void Framebuffer::BindTextureDepth(const unsigned int& index) const {
 	}
 }
 
-unsigned int Framebuffer::GetTexture() const {
-	return colourTexture;
+unsigned int Framebuffer::GetTexture(unsigned int index) const {
+	if(index >= colourTexture.size()) return -1;
+	return colourTexture[index];
 }
 
-void Framebuffer::CreateFramebuffer() {
+void Framebuffer::CreateFramebuffer(const unsigned int& colourAttachments) {
 
 	// Generate & bind Framebuffer
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
 	// Create Colour Texture
-	if(type == FramebufferType::COLOUR || type == FramebufferType::COLOUR_AND_DEPTH) {
-		// Generate Texture
-		glGenTextures(1, &colourTexture);
+	if(type != FramebufferType::DEPTH_TEX) {
 
-		glBindTexture(GL_TEXTURE_2D, colourTexture);
+		unsigned int texture;
+		std::vector<unsigned int> attachments = std::vector<unsigned int>();
+		for(int i = 0; i < colourAttachments; i++) {
+			// Generate Texture
+			glGenTextures(1, &texture);
 
-		// Create Buffer Texture
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, framebufferSize.x, framebufferSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glBindTexture(GL_TEXTURE_2D, texture);
 
-		// Unbind Texture
-		glBindTexture(GL_TEXTURE_2D, 0);
+			// Create Buffer Texture
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, framebufferSize.x, framebufferSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		// Attach Texture to Framebuffer
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colourTexture, 0);
+			// Unbind Texture
+			glBindTexture(GL_TEXTURE_2D, 0);
 
+			// Attach Texture to Framebuffer
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, texture, 0);
+			attachments.emplace_back(GL_COLOR_ATTACHMENT0 + i);
+			
+			colourTexture.emplace_back(texture);
+		}
 
-		if(type != FramebufferType::COLOUR_AND_DEPTH) {
+		glDrawBuffers(colourAttachments, attachments.data());
+
+		// Create Depth Renderer
+		if(type == FramebufferType::COLOUR_TEX_DEPTH) {
 			// Generate Render Buffer (for depth & stencil)
 			glGenRenderbuffers(1, &rbo);
 
@@ -118,7 +125,8 @@ void Framebuffer::CreateFramebuffer() {
 		}
 	}
 
-	if(type == FramebufferType::DEPTH || type == FramebufferType::COLOUR_AND_DEPTH) {
+	// Create Depth Texture
+	if(type == FramebufferType::DEPTH_TEX || type == FramebufferType::COLOUR_TEX_DEPTH_TEX) {
 		glGenTextures(1, &depthTexture);
 
 		glBindTexture(GL_TEXTURE_2D, depthTexture);
@@ -129,7 +137,7 @@ void Framebuffer::CreateFramebuffer() {
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
 
-		if(type != FramebufferType::COLOUR_AND_DEPTH) {
+		if(type != FramebufferType::COLOUR_TEX_DEPTH_TEX) {
 			// If framebuffer is depth only, we dont need to worry about drawing? 
 			glDrawBuffer(GL_NONE);
 			glReadBuffer(GL_NONE);

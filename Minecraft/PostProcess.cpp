@@ -1,7 +1,7 @@
 #include "PostProcess.h"
 
-PostProcess::PostProcess(const char* shaderName, const float& sizeX, const float& sizeY, const FramebufferType& type) {
-	framebuffer = new Framebuffer(glm::vec2(sizeX, sizeY), type);
+PostProcess::PostProcess(const char* shaderName, const float& sizeX, const float& sizeY, const FramebufferType& type, const unsigned int& colourAttachments) {
+	framebuffer = new Framebuffer(glm::vec2(sizeX, sizeY), type, colourAttachments);
 
 	shader = ShaderManager::AddShader(shaderName);
 

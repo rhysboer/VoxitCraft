@@ -278,7 +278,7 @@ void Object3D::Render(BaseCamera& camera) {
 	Render(camera.ProjectionView());
 }
 
-void Object3D::RawRender(BaseCamera& camera) {
+void Object3D::RawRender() {
 	if(!shader) return;
 
 	glBindVertexArray(object.VAO);

@@ -73,18 +73,6 @@ unsigned int WorldGeneration::CreateChunkWorldData(const Chunk& chunk, std::arra
 		}
 	}
 
-
-	//for(int x = 0; x <= 15; x++) {
-	//	for(int z = 0; z <= 15; z++) {
-	//		data[(4 * Chunk::CHUNK_SLICE) + ((z) * 16) + (x)] = BlockIDs::DIRT;
-	//	}
-	//}
-	
-	//data[(1 * Chunk::CHUNK_SLICE) + ((0 + 2) * 16) + (0 + 2)] = BlockIDs::DIRT;
-	//data[(2 * Chunk::CHUNK_SLICE) + ((0 + 2) * 16) + (0 + 2)] = BlockIDs::DIRT;
-
-	//data[(7 * Chunk::CHUNK_SLICE) + ((0 + 2) * 16) + (0 + 2)] = BlockIDs::DIRT;
-
 	for(int i = 0; i < treePositions.size(); i++) {
 		Biome* biome = GetBiome(treePositions[i].x, treePositions[i].z);
 	
@@ -100,60 +88,6 @@ unsigned int WorldGeneration::CreateChunkWorldData(const Chunk& chunk, std::arra
 	
 	return maxHeight + 10;
 }
-
-
-/*
-int WorldGeneration::CreateChunkWorldData(const Chunk& chunk, std::array<BlockIDs, Chunk::CHUNK_MASS>& data) {
-	if(chunk.hasWorldData)
-		return 0.0f;
-
-	std::vector<glm::vec3> treePositions = std::vector<glm::vec3>();
-	treePositions.reserve(10);
-
-	CreateBiomeMap(chunk);
-	GetHeightMap(chunk, heightMap);
-
-	int maxHeight = (*std::max_element(heightMap.begin(), heightMap.end())) + 1;
-
-	for(int y = 0; y < maxHeight; y++) {
-		for(int z = 0; z < Chunk::CHUNK_SIZE; z++) {
-			for(int x = 0; x < Chunk::CHUNK_SIZE; x++) {
-				int blockIndex = (y * Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE) + (z * Chunk::CHUNK_SIZE) + x;
-
-				float height = y - (int)heightMap[(z * Chunk::CHUNK_SIZE) + x];
-
-
-				Biome* biome = GetBiome(x, z);
-				BlockIDs block = biome->GetBlock(height);
-
-
-				if(chunk.blocks[blockIndex] == BlockIDs::AIR)
-					data[blockIndex] = block; //chunk.SetBlock(blockIndex, block);
-
-				if(height == 1) {
-					if(biome->GetGenerationParameters().structureDensity <= 0)
-						continue;
-
-					if(rand() % biome->GetGenerationParameters().structureDensity == 1) {
-						treePositions.emplace_back(x, y, z);
-					}
-				}
-			}
-		}
-	}
-
-
-	//for(int i = 0; i < treePositions.size(); i++) {
-	//	Biome* biome = GetBiome(treePositions[i].x, treePositions[i].z);
-	//
-	//	if(biome != nullptr) {
-	//		biome->AddStructure(chunk, treePositions[i] + chunk.worldCoord);
-	//	}
-	//}
-
-	return maxHeight;
-}
-*/
 
 void WorldGeneration::CreateBiomeMap(const Chunk& chunk) {
 	for(int z = 0; z < Chunk::CHUNK_SIZE; z++) {

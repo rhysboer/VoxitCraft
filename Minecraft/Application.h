@@ -32,6 +32,7 @@ private:
 	virtual void OnRender() override;
 
 	void SetupObjects();
+	void RenderGUI();
 
 private:
 	
@@ -40,7 +41,10 @@ private:
 	// Post processing and framebuffer
 	PostProcessEffect effect;
 	PostProcess* postProcessing;
-	Framebuffer* framebuffer;
+	
+	Framebuffer* pingpongBuffer[2];
+	Object3D* screenQuad;
+	Shader* blurShader;
 	
 	// Held Block Preview
 	Framebuffer* blockBuffer;

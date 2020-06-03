@@ -3,7 +3,7 @@
 std::vector<BlockData> BlockManager::blocks = std::vector<BlockData>();
 TileMap* BlockManager::blockTexture = nullptr;
 TileMap* BlockManager::waterTexture = nullptr;
-
+TileMap* BlockManager::bloomTexture = nullptr;
 
 // Vertex Block Data
 std::vector<float> BlockManager::vertexDataBlock = std::vector<float>(
@@ -116,6 +116,7 @@ void BlockManager::Init() {
 	// Load block textures
 	blockTexture = new TileMap("./data/textures/tileset.png", 8, 8);
 	waterTexture = new TileMap("./data/textures/water.png", 16, 1);
+	bloomTexture = new TileMap("./data/textures/tileset_bloom.png", 8, 8);
 
 	// Load Block Data
 	LoadBlockDatabase();
@@ -125,9 +126,11 @@ void BlockManager::Init() {
 void BlockManager::Destroy() {
 	delete blockTexture;
 	delete waterTexture;
+	delete bloomTexture;
 
 	blockTexture = nullptr;
 	waterTexture = nullptr;
+	bloomTexture = nullptr;
 }
 
 const BlockData const * BlockManager::GetBlockData(const BlockIDs& id) {
@@ -135,16 +138,20 @@ const BlockData const * BlockManager::GetBlockData(const BlockIDs& id) {
 }
 
 TileMap const* BlockManager::GetTileMap(const SpriteSheet type) {
-	return (type == SpriteSheet::BLOCK) ? blockTexture : waterTexture;
+	return (type == SpriteSheet::BLOCK) ? blockTexture : (type == SpriteSheet::WATER) ? waterTexture : bloomTexture;
 }
 
 void BlockManager::GetTextureCoords(const BlockIDs& block, const unsigned int& face, std::array<glm::vec2, 4>& coords) {
 	BlockData const* data = GetBlockData(block);
 
-	if(data->spriteSheet == SpriteSheet::BLOCK) {
-		blockTexture->GetSpriteCoordinates(data->texture[face], coords);
-	} else {
-		waterTexture->GetSpriteCoordinates(data->texture[face], coords);
+	switch(data->spriteSheet) {
+		case SpriteSheet::WATER:
+			waterTexture->GetSpriteCoordinates(data->texture[face], coords);
+			break;
+		case SpriteSheet::BLOCK:
+		case SpriteSheet::BLOOM:
+			blockTexture->GetSpriteCoordinates(data->texture[face], coords);
+			break;
 	}
 }
 
