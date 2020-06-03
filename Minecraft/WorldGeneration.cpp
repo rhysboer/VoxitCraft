@@ -73,6 +73,18 @@ unsigned int WorldGeneration::CreateChunkWorldData(const Chunk& chunk, std::arra
 		}
 	}
 
+
+	//for(int x = 0; x <= 15; x++) {
+	//	for(int z = 0; z <= 15; z++) {
+	//		data[(4 * Chunk::CHUNK_SLICE) + ((z) * 16) + (x)] = BlockIDs::DIRT;
+	//	}
+	//}
+	
+	//data[(1 * Chunk::CHUNK_SLICE) + ((0 + 2) * 16) + (0 + 2)] = BlockIDs::DIRT;
+	//data[(2 * Chunk::CHUNK_SLICE) + ((0 + 2) * 16) + (0 + 2)] = BlockIDs::DIRT;
+
+	//data[(7 * Chunk::CHUNK_SLICE) + ((0 + 2) * 16) + (0 + 2)] = BlockIDs::DIRT;
+
 	for(int i = 0; i < treePositions.size(); i++) {
 		Biome* biome = GetBiome(treePositions[i].x, treePositions[i].z);
 	

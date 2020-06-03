@@ -107,6 +107,15 @@ void ChunkManager::ChunkLoader() {
 }
 
 void ChunkManager::Update() {
+
+	if(Input::IsKeyPressed(GLFW_KEY_R)) {
+		glm::ivec2 currChunk = glm::ivec2(glm::floor(World::GetPlayer().GetPosition().x / Chunk::CHUNK_SIZE), glm::floor(World::GetPlayer().GetPosition().z / Chunk::CHUNK_SIZE));
+
+		FindChunkLock(currChunk)->CreateSunlight();
+		FindChunkLock(currChunk)->CalculateSunlight();
+
+	}
+
 }
 
 void ChunkManager::Render(BaseCamera& camera) {
@@ -265,7 +274,7 @@ void ChunkManager::GetSolidBlocksInArea(const glm::vec3& worldPosition, const gl
 	for(int x = xMin; x <= xMax; x++) {
 		for(int y = yMin; y <= yMax; y++) {
 			for(int z = zMin; z <= zMax; z++) {
-				if(BlockManager::GetBlockData(GetBlock(x, y, z))->isSolid == true) {
+				if(BlockManager::GetBlockData(GetBlock(x, y, z))->walkThrough == true) {
 					output.emplace_back(x, y, z);
 				}
 			}

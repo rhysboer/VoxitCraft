@@ -75,7 +75,6 @@ public:
 
 public: // private
 
-	// TEST
 	void SetWorldData(const std::array<BlockIDs, CHUNK_MASS>& data, int height);
 
 	void GenerateMeshData(); // Create mesh data for the chunk to make into a mesh
@@ -93,8 +92,12 @@ public: // private
 	bool IsPositionInChunk(const float& x, const float& y, const float& z) const; // Local Position
 
 	// Returns the index of a block in the array from local position.
-	unsigned int ToBlockIndex(const float& x, const float& y, const float& z) const;
-	unsigned int ToBlockIndex(const glm::vec3& localPosition) const;
+	inline unsigned int ToBlockIndex(const float& x, const float& y, const float& z) const {
+		return (y * CHUNK_SLICE) + (z * CHUNK_SIZE) + x;
+	}
+	inline unsigned int ToBlockIndex(const glm::vec3& localPosition) const {
+		return ToBlockIndex(localPosition.x, localPosition.y, localPosition.z);
+	}
 	glm::vec3 IndexToLocalPos(const unsigned int& index) const;
 
 	// Returns the block at location inside the chunk or its neighbour, ONLY USED FOR CHUNK MESH GENERATION
@@ -110,29 +113,62 @@ public: // private
 
 	void SetDirty() { isDirty = true; }
 
-	// 
 	bool NeighbourSlices(const unsigned int& y);
 
 
 	// LIGHTING
 	struct LightNode {
-		LightNode(short _index, Chunk* _chunk) : index(_index), chunk(_chunk) 
-		{ }
-
+		LightNode(short _index, Chunk* _chunk) : index(_index), chunk(_chunk)  { }
 		short index;
+		Chunk* chunk;
+	};
+	struct LightRemoveNode {
+		LightRemoveNode(short _index, short _value, Chunk* _chunk) : index(_index), value(_value), chunk(_chunk) {}
+		short index;
+		short value;
 		Chunk* chunk;
 	};
 
 
 	void CalculateLight();
+	void CalculateRemovalLight();
+	
 
-	inline int GetSunlight(const int& x, const int& y, const int& z);
-	inline void SetSunlight(const int& x, const int& y, const int& z, const int& level);
+	void CreateSunlight();
+	void CalculateSunlight();
+	void CalculateSunlightRemoval();
+	void RemoveSunColumn(const int& x, const int& y, const int& z);
+
+
+	// Credit: https://www.seedofandromeda.com/blogs/29-fast-flood-fill-lighting-in-a-blocky-voxel-game-pt-1 & part 2
+	inline int GetSunlight(const int& x, const int& y, const int& z) {
+		return (lightMap[y][z][x] >> 4) & 0xF;
+	}
+	inline int GetSunlightNeighbourhood(const int& x, const int& y, const int& z) {
+		Chunk* chunk = this;
+
+		if(x >= CHUNK_SIZE)	chunk = neighbourChunks[(int)NEIGHBOUR::RIGHT];
+		else if(x < 0)		chunk = neighbourChunks[(int)NEIGHBOUR::LEFT];
+		else if(z >= CHUNK_SIZE)	chunk = neighbourChunks[(int)NEIGHBOUR::FRONT];
+		else if(z < 0)				chunk = neighbourChunks[(int)NEIGHBOUR::BACK];
+		else if(x < 0 && z < 0)				chunk = neighbourChunks[(int)NEIGHBOUR::BACK_LEFT];
+		else if(x >= CHUNK_SIZE && z < 0)	chunk = neighbourChunks[(int)NEIGHBOUR::BACK_RIGHT];
+		else if(x < 0 && z >= CHUNK_SIZE)			chunk = neighbourChunks[(int)NEIGHBOUR::FRONT_LEFT];
+		else if(x >= CHUNK_SIZE && z >= CHUNK_SIZE)	chunk = neighbourChunks[(int)NEIGHBOUR::FRONT_RIGHT];
+
+		if(chunk == nullptr)
+			return 0;
+
+		return chunk->GetSunlight(Math::Modulo(x, CHUNK_SIZE), glm::clamp(y, 0, CHUNK_HEIGHT - 1), Math::Modulo(z, CHUNK_SIZE));
+	}
+	inline void SetSunlight(const int& x, const int& y, const int& z, const int& level) {
+		lightMap[y][z][x] = (lightMap[y][z][x] & 0xF) | (level << 4);
+	}
 	inline int GetLight(const int& x, const int& y, const int& z) {
 		return lightMap[y][z][x] & 0xF;
 	}
 	// Get Light in sourrounding neighbours, will return 0 if neighbour is null
-	inline int GetLightNeighbourHood(const int& x, const int& y, const int& z) {
+	inline int GetLightNeighbourhood(const int& x, const int& y, const int& z) {
 		Chunk* chunk = this;
 
 		// Reverse sides
@@ -154,7 +190,7 @@ public: // private
 		if(x < 0 || x >= CHUNK_SIZE || y < 0 || y >= CHUNK_HEIGHT || z < 0 || z >= CHUNK_HEIGHT)
 			return;
 
-		lightMap[y][z][x] = (lightMap[x][y][z] & 0xF0) | level;
+		lightMap[y][z][x] = (lightMap[y][z][x] & 0xF0) | level;
 	}
 
 
@@ -166,7 +202,6 @@ public: // Private
 		int transparentBlocks[Chunk::CHUNK_SLICE];
 	} chunkSlice = ChunkSlice(); // TEST
 
-	//int slices[CHUNK_HEIGHT]; // How many blocks are on each layer of the chunk
 	BlockIDs blocks[CHUNK_MASS]; // All blocks inside of the chunk
 	glm::ivec2 localCoord; // Local Coordinates of the chunk
 	glm::vec3 worldCoord; // World Coordinates of the chunk
@@ -175,11 +210,17 @@ public: // Private
 	bool isDirty; // Is chunk dirty, needs to regenerate mesh data
 	bool uploadMeshToGPU; // Does chunk need to upload its data to the gpu
 	bool hasWorldData; // Has generated world data
+	bool hasSunlight;
 	AABB* aabb; // Used for frustum culling chunk
+
 
 	// LIGHTING
 	unsigned char lightMap[CHUNK_HEIGHT][CHUNK_SIZE][CHUNK_SIZE];
+
 	std::queue<LightNode> lightQueue = std::queue<LightNode>();
+	std::queue<LightRemoveNode> lightRemoveQueue = std::queue<LightRemoveNode>();
+	std::queue<LightNode> sunlightQueue = std::queue<LightNode>();
+	std::queue<LightRemoveNode> sunlightRemoveQueue = std::queue<LightRemoveNode>();
 
 	// Neighbours
 	const glm::ivec2 neighbourOffsets[8] = { 

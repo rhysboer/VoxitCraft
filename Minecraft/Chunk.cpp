@@ -1,7 +1,7 @@
 #include "Chunk.h"
 #include "ChunkManager.h"
 
-Chunk::Chunk(glm::ivec2 index, ChunkManager& world) :localCoord(index), hasWorldData(false), highestBlock(0) {
+Chunk::Chunk(glm::ivec2 index, ChunkManager& world) :localCoord(index), hasWorldData(false), highestBlock(0), hasSunlight(false) {
 	this->chunkManager = &world;
 	worldCoord = glm::vec3(index.x * CHUNK_SIZE, 0.0f, index.y * CHUNK_SIZE);
 	
@@ -103,7 +103,7 @@ void Chunk::SetBlock(const unsigned int& index, const BlockIDs& id) {
 	BlockData const * newblock = BlockManager::GetBlockData(id);
 	BlockData const * oldBlock = BlockManager::GetBlockData(blocks[index]);
 	
-	int y = index / (CHUNK_SIZE * CHUNK_SIZE);
+	int y = index / CHUNK_SLICE;
 
 	// if new block is NOT transparent & old is block
 	if(!newblock->isTransparent && oldBlock->isTransparent) {
@@ -119,20 +119,82 @@ void Chunk::SetBlock(const unsigned int& index, const BlockIDs& id) {
 			chunkSlice.transparentBlocks[y] += 1;
 	}
 
+	// Set Block
+	blocks[index] = id;
+	this->isDirty = true;
+
+	// Set highest block
 	highestBlock = glm::max(highestBlock, (int)glm::floor(index / CHUNK_SLICE));
 
 
-	if(newblock->lightLevel > 0) {
-		int x = index % CHUNK_SIZE;
-		int y = index / CHUNK_SLICE;
-		int z = (index % (CHUNK_SIZE * CHUNK_SIZE)) / CHUNK_SIZE;
+	glm::vec3 lPos = glm::vec3(index % CHUNK_SIZE, index / CHUNK_SLICE, (index % (CHUNK_SIZE * CHUNK_SIZE)) / CHUNK_SIZE);
+
+	if(GetLight(lPos.x, lPos.y, lPos.z) > 0) {
+		short light = GetLight(lPos.x, lPos.y, lPos.z);
+		lightRemoveQueue.emplace(index, light, this);
+		SetLight(lPos.x, lPos.y, lPos.z, 0);
 	
-		SetLight(x, y, z, newblock->lightLevel);
-		lightQueue.emplace(index, this);
-		this->SetDirty();
+		CalculateRemovalLight();
 		CalculateLight();
 	}
 
+	if(newblock->isTransparent) {
+		int brightestLight = 0;
+		const glm::vec3 offsets[] = { glm::vec3(-1, 0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 0, 1), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0), glm::vec3(0, -1, 0) };
+		for(int i = 0; i < 6; i++)
+			brightestLight = glm::max(brightestLight, GetLightNeighbourhood(lPos.x + offsets[i].x, lPos.y + offsets[i].y, lPos.z + offsets[i].z));
+	
+		// When we break a block, get the brighest light around the block and set light at block position to brightest value - 1
+		if(brightestLight > 0) {
+			SetLight(lPos.x, lPos.y, lPos.z, brightestLight - 1);
+			lightQueue.emplace(index, this);
+			CalculateLight();
+		}
+	}
+
+
+	// PLACING BLOCK & REMOVING SUN
+	if(GetSunlight(lPos.x, lPos.y, lPos.z) > 0) {
+	
+		short light = GetSunlight(lPos.x, lPos.y, lPos.z);
+		sunlightRemoveQueue.emplace(index, light, this);
+		SetSunlight(lPos.x, lPos.y, lPos.z, 0);
+	
+		CalculateSunlightRemoval();
+		CalculateSunlight();
+	
+	} else { // REMOVING BLOCK & PLACING SUN
+	
+		int brightestLight = 0;
+		
+		if(GetSunlight(lPos.x, lPos.y + 1, lPos.z) == 15) {
+			brightestLight = 15;
+		} else {
+			const glm::vec3 offsets[] = { glm::vec3(-1, 0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 0, 1), glm::vec3(0, 0, -1), glm::vec3(0, -1, 0), glm::vec3(0, 1, 0) };
+			for(int i = 0; i < 6; i++)
+				brightestLight = glm::max(brightestLight, GetSunlightNeighbourhood(lPos.x + offsets[i].x, lPos.y + offsets[i].y, lPos.z + offsets[i].z));
+	
+			brightestLight = glm::clamp(brightestLight - 1, 0, 15);
+		}
+	
+		if(brightestLight > 0) {
+	
+			SetSunlight(lPos.x, lPos.y, lPos.z, brightestLight);
+			sunlightQueue.emplace(index, this);
+	
+			CalculateSunlight();
+		}
+	}
+	
+
+	// If placing a light block, calculate light values
+	if(newblock->lightLevel > 0) {
+		SetLight(lPos.x, lPos.y, lPos.z, newblock->lightLevel);
+		lightQueue.emplace(index, this);
+		this->SetDirty();
+
+		CalculateLight();
+	}
 
 	// IF block is on the side of the chunk, dirty neighbour
 	glm::vec3 pos = IndexToLocalPos(index);
@@ -152,10 +214,6 @@ void Chunk::SetBlock(const unsigned int& index, const BlockIDs& id) {
 		SetNeighbourDirty(NEIGHBOUR::FRONT_LEFT);
 	if(pos.x == CHUNK_SIZE - 1 && pos.z == CHUNK_SIZE - 1)
 		SetNeighbourDirty(NEIGHBOUR::FRONT_RIGHT);
-
-	// Set Block
-	blocks[index] = id;
-	this->isDirty = true;
 }
 
 //							[ GET BLOCKS ]
@@ -323,14 +381,6 @@ bool Chunk::IsPositionInChunk(const glm::vec3& localPosition) const {
 	return IsPositionInChunk(localPosition.x, localPosition.y, localPosition.z);
 }
 
-unsigned int Chunk::ToBlockIndex(const float& x, const float& y, const float& z) const {
-	return (y * (CHUNK_SIZE * CHUNK_SIZE)) + (z * CHUNK_SIZE) + x;
-}
-
-unsigned int Chunk::ToBlockIndex(const glm::vec3& localPosition) const {
-	return ToBlockIndex(localPosition.x, localPosition.y, localPosition.z);
-}
-
 glm::vec3 Chunk::IndexToLocalPos(const unsigned int& index) const {
 	float x = index % CHUNK_SIZE;
 	float y = glm::floor(index / CHUNK_SLICE);
@@ -379,11 +429,168 @@ bool Chunk::NeighbourSlices(const unsigned int& y) {
 	return true;
 }
 
+void Chunk::CalculateRemovalLight() {
+	const glm::vec3 offsets[] = { glm::vec3(-1, 0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 0, 1), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0), glm::vec3(0, -1, 0) };
+
+	while(lightRemoveQueue.empty() == false) {
+		LightRemoveNode& node = lightRemoveQueue.front();
+		Chunk* chunk = node.chunk;
+		int index = node.index;
+		int lightLevel = node.value;
+
+		lightRemoveQueue.pop();
+
+		int x = node.index % CHUNK_SIZE;
+		int y = node.index / CHUNK_SLICE;
+		int z = (node.index % (CHUNK_SIZE * CHUNK_SIZE)) / CHUNK_SIZE;
+
+		glm::vec3 pos;
+		for(int i = 0; i < 6; i++) {
+			Chunk* neighbour = (IsPositionInChunk(glm::vec3(x, y, z) + offsets[i]) == false && i < 4) ? chunk->neighbourChunks[i] : chunk;
+			pos = { Math::Modulo(x + offsets[i].x, CHUNK_SIZE), glm::clamp(y + offsets[i].y, 0.0f, (float)CHUNK_HEIGHT), Math::Modulo(z + offsets[i].z, CHUNK_SIZE) };
+
+			if(neighbour == nullptr || pos.y < 0 || pos.y > CHUNK_HEIGHT - 1)
+				continue;
+
+			int neighbourLight = neighbour->GetLight(pos.x, pos.y, pos.z);
+			short index = (pos.y * CHUNK_SLICE) + (pos.z * CHUNK_SIZE) + pos.x;
+
+			if(neighbourLight != 0 && neighbourLight < lightLevel) {
+				neighbour->SetLight(pos.x, pos.y, pos.z, 0);
+				neighbour->SetDirty();
+
+				lightRemoveQueue.emplace(index, neighbourLight, neighbour);
+			} else if(neighbourLight >= lightLevel) {
+				lightQueue.emplace(index, neighbour);
+			}
+		}
+	}
+}
+
+void Chunk::CreateSunlight() {
+	for(int x = 0; x < CHUNK_SIZE; x++) {
+		for(int z = 0; z < CHUNK_SIZE; z++) {
+			if(BlockManager::GetBlockData(GetBlockLocal(x, highestBlock + 1, z))->isTransparent) {
+				SetSunlight(x, highestBlock + 1, z, 15);
+	
+				short index = ((highestBlock + 1) * CHUNK_SLICE) + (z * CHUNK_SIZE) + x;
+				sunlightQueue.emplace(index, this);
+			}
+		}
+	}
+	
+
+	this->isDirty = true;
+	hasSunlight = true;
+}
+
+void Chunk::CalculateSunlight() {
+	const glm::vec3 offsets[] = {
+		glm::vec3(-1, 0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 0, 1), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0), glm::vec3(0, -1, 0)  
+	};
+
+	while(sunlightQueue.empty() == false) {
+		LightNode& node = sunlightQueue.front();
+		Chunk* chunk = node.chunk;
+
+		sunlightQueue.pop();
+
+		int x = node.index % CHUNK_SIZE;
+		int y = node.index / CHUNK_SLICE;
+		int z = (node.index % (CHUNK_SIZE * CHUNK_SIZE)) / CHUNK_SIZE;
+
+		int light = chunk->GetSunlight(x, y, z);
+
+		glm::vec3 pos;
+		for(int i = 0; i < 6; i++) {
+			Chunk* neighbour = (IsPositionInChunk(glm::vec3(x, y, z) + offsets[i]) == false && i < 4) ? chunk->neighbourChunks[i] : chunk;
+
+			pos = { Math::Modulo(x + offsets[i].x, CHUNK_SIZE), y + offsets[i].y, Math::Modulo(z + offsets[i].z, CHUNK_SIZE) };
+
+			if(neighbour == nullptr || pos.y < 0 || pos.y > CHUNK_HEIGHT - 1)
+				continue;
+
+			int neighboursLight = neighbour->GetSunlight(pos.x, pos.y, pos.z);
+			if(BlockManager::GetBlockData(neighbour->GetBlockLocal(pos.x, pos.y, pos.z))->isTransparent && (neighboursLight + 2 <= light || light == 15 && offsets[i].y == -1.0f)) {
+				short index = (pos.y * CHUNK_SLICE) + (pos.z * CHUNK_SIZE) + pos.x;
+
+				int newLight = (offsets[i].y == -1.0f && light == 15) ? light : light - 1;
+
+				neighbour->SetSunlight(pos.x, pos.y, pos.z, newLight);
+				neighbour->SetDirty();
+
+				sunlightQueue.emplace(index, neighbour);
+			}
+		}
+	}
+}
+
+void Chunk::CalculateSunlightRemoval() {
+	const glm::vec3 offsets[] = { glm::vec3(-1, 0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 0, 1), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0), glm::vec3(0, -1, 0) };
+
+	while(sunlightRemoveQueue.empty() == false) {
+		LightRemoveNode& node = sunlightRemoveQueue.front();
+		Chunk* chunk = node.chunk;
+		int index = node.index;
+		int lightLevel = node.value;
+
+		sunlightRemoveQueue.pop();
+
+		int x = node.index % CHUNK_SIZE;
+		int y = node.index / CHUNK_SLICE;
+		int z = (node.index % (CHUNK_SIZE * CHUNK_SIZE)) / CHUNK_SIZE;
+
+		glm::vec3 pos;
+		for(int i = 0; i < 6; i++) {
+			Chunk* neighbour = (IsPositionInChunk(glm::vec3(x, y, z) + offsets[i]) == false && i < 4) ? chunk->neighbourChunks[i] : chunk;
+			pos = { Math::Modulo(x + offsets[i].x, CHUNK_SIZE), glm::clamp(y + offsets[i].y, 0.0f, (float)CHUNK_HEIGHT), Math::Modulo(z + offsets[i].z, CHUNK_SIZE) };
+
+			if(neighbour == nullptr || pos.y < 0 || pos.y > CHUNK_HEIGHT - 1)
+				continue;
+
+			int neighbourLight = neighbour->GetSunlight(pos.x, pos.y, pos.z);
+			short index = (pos.y * CHUNK_SLICE) + (pos.z * CHUNK_SIZE) + pos.x;
+
+			if(neighbourLight != 0 && neighbourLight < lightLevel) {
+				neighbour->SetSunlight(pos.x, pos.y, pos.z, 0);
+				neighbour->SetDirty();
+
+				sunlightRemoveQueue.emplace(index, neighbourLight, neighbour);
+			} else if(lightLevel == 15 && offsets[i].y == -1) {
+				neighbour->SetSunlight(pos.x, pos.y, pos.z, 0);
+				neighbour->SetDirty();
+
+				sunlightRemoveQueue.emplace(index, neighbourLight, neighbour);
+			} else if(neighbourLight >= lightLevel) {
+				sunlightQueue.emplace(index, neighbour);
+			}
+		}
+	}
+}
+
+void Chunk::RemoveSunColumn(const int& x, const int& y, const int& z) {
+	for(int i = y - 1; i >= 0; i--) {
+		if(!BlockManager::GetBlockData(GetBlockLocal(x, i, z))->isTransparent)
+			break;
+
+		SetSunlight(x, i, z, 0);
+	}
+}
+
 void Chunk::CalculateLight() {
+	const glm::vec3 offsets[] = {
+		glm::vec3(-1, 0, 0), // LEFT
+		glm::vec3(1, 0, 0), // RIGHT
+		glm::vec3(0, 0, 1), // FRONT
+		glm::vec3(0, 0, -1), // BACK
+		glm::vec3(0, 1, 0), // UP
+		glm::vec3(0, -1, 0) // DOWN
+	};
+
 	while(lightQueue.empty() == false) {
 		LightNode& node = lightQueue.front();
 		Chunk* chunk = node.chunk;
-		
+
 		lightQueue.pop();
 
 		int x = node.index % CHUNK_SIZE;
@@ -392,89 +599,24 @@ void Chunk::CalculateLight() {
 
 		int light = chunk->GetLight(x, y, z);
 
-		// Left
-		Chunk* neighbour = (x - 1 < 0) ? chunk->neighbourChunks[(int)NEIGHBOUR::LEFT] : chunk;
-		if(neighbour == nullptr)
-			continue;
-		
-		glm::vec3 offset = glm::vec3(Math::Modulo(x - 1, CHUNK_SIZE), y, z);
-		if(BlockManager::GetBlockData(neighbour->GetBlockLocal(offset.x, offset.y, offset.z))->isTransparent && neighbour->GetLight(offset.x, offset.y, offset.z) + 2 <= light) {
-			short index = (y * CHUNK_SLICE) + (z * CHUNK_SIZE) + (Math::Modulo(x - 1, CHUNK_SIZE));
-		
-			neighbour->SetLight(offset.x, offset.y, offset.z, light - 1);
-			neighbour->SetDirty();
-			lightQueue.emplace(index, neighbour);
-		}
-		
-		// Right
-		neighbour = (x + 1 > CHUNK_SIZE - 1) ? chunk->neighbourChunks[(int)NEIGHBOUR::RIGHT] : chunk;
-		if(neighbour == nullptr)
-			continue;
-		
-		offset = glm::vec3(Math::Modulo(x + 1, CHUNK_SIZE), y, z);
-		if(BlockManager::GetBlockData(neighbour->GetBlockLocal(offset.x, offset.y, offset.z))->isTransparent && neighbour->GetLight(offset.x, offset.y, offset.z) + 2 <= light) {
-			short index = (y * CHUNK_SLICE) + (z * CHUNK_SIZE) + Math::Modulo(x + 1, CHUNK_SIZE);
-		
-			neighbour->SetLight(offset.x, offset.y, offset.z, light - 1);
-			neighbour->SetDirty();
-			lightQueue.emplace(index, neighbour);
-		}
-		
-		// Back
-		neighbour = (z - 1 < 0) ? chunk->neighbourChunks[(int)NEIGHBOUR::BACK] : chunk;
-		if(neighbour == nullptr)
-			continue;
-		
-		offset = glm::vec3(x, y, Math::Modulo(z - 1, CHUNK_SIZE));
-		
-		if(BlockManager::GetBlockData(neighbour->GetBlockLocal(offset.x, offset.y, offset.z))->isTransparent && neighbour->GetLight(offset.x, offset.y, offset.z) + 2 <= light) {
-			short index = (y * CHUNK_SLICE) + (offset.z * CHUNK_SIZE) + x;
-		
-			neighbour->SetLight(offset.x, offset.y, offset.z, light - 1);
-			neighbour->SetDirty();
-			lightQueue.emplace(index, neighbour);
-		}
-		
-		// Forward
-		neighbour = (z + 1 > CHUNK_SIZE - 1) ? chunk->neighbourChunks[(int)NEIGHBOUR::FRONT] : chunk;
-		if(neighbour == nullptr)
-			continue;
-		
-		offset = glm::vec3(x, y, Math::Modulo(z + 1, CHUNK_SIZE));
-		
-		if(BlockManager::GetBlockData(neighbour->GetBlockLocal(offset.x, offset.y, offset.z))->isTransparent && neighbour->GetLight(offset.x, offset.y, offset.z) + 2 <= light) {
-			short index = (y * CHUNK_SLICE) + (offset.z * CHUNK_SIZE) + x;
-		
-			neighbour->SetLight(offset.x, offset.y, offset.z, light - 1);
-			neighbour->SetDirty();
-			lightQueue.emplace(index, neighbour);
-		}
-		
-		
-		// UP
-		offset = glm::vec3(x, y + 1, z);
-		if(offset.y >= 0 && offset.y < CHUNK_HEIGHT - 1) {
-			if(BlockManager::GetBlockData(neighbour->GetBlockLocal(offset.x, offset.y, offset.z))->isTransparent && chunk->GetLight(offset.x, offset.y, offset.z) + 2 <= light) {
-				short index = (offset.y * CHUNK_SLICE) + (z * CHUNK_SIZE) + x;
-		
-				chunk->SetLight(offset.x, offset.y, offset.z, light - 1);
-				chunk->SetDirty();
-				lightQueue.emplace(index, chunk);
-			}
-		}
-		//
-		//// DOWN
-		offset = glm::vec3(x, y - 1, z);
-		if(offset.y >= 0 && offset.y < CHUNK_HEIGHT - 1) {
-			if(BlockManager::GetBlockData(neighbour->GetBlockLocal(offset.x, offset.y, offset.z))->isTransparent && chunk->GetLight(offset.x, offset.y, offset.z) + 2 <= light) {
-				short index = (offset.y * CHUNK_SLICE) + (z * CHUNK_SIZE) + x;
-		
-				chunk->SetLight(offset.x, offset.y, offset.z, light - 1);
-				chunk->SetDirty();
-				lightQueue.emplace(index, chunk);
-			}
-		}
+		glm::vec3 pos;
+		for(int i = 0; i < 6; i++) {
+			Chunk* neighbour = (IsPositionInChunk(glm::vec3(x, y, z) + offsets[i]) == false && i < 4) ? chunk->neighbourChunks[i] : chunk;
+			
+			pos = { Math::Modulo(x + offsets[i].x, CHUNK_SIZE), glm::clamp(y + offsets[i].y, 0.0f, (float)CHUNK_HEIGHT), Math::Modulo(z + offsets[i].z, CHUNK_SIZE) };
+			
+			if(neighbour == nullptr || pos.y < 0 || pos.y > CHUNK_HEIGHT - 1)
+				continue;
 
+			int neighbourLight = neighbour->GetLight(pos.x, pos.y, pos.z);
+			if(BlockManager::GetBlockData(neighbour->GetBlockLocal(pos.x, pos.y, pos.z))->isTransparent && neighbourLight + 2 <= light) {
+				short index = (pos.y * CHUNK_SLICE) + (pos.z * CHUNK_SIZE) + pos.x;
+				neighbour->SetLight(pos.x, pos.y, pos.z, light - 1);
+				neighbour->SetDirty();
+
+				lightQueue.emplace(index, neighbour);
+			}
+		}
 	}
 }
 
@@ -510,9 +652,10 @@ void Chunk::SetWorldData(const std::array<BlockIDs, CHUNK_MASS>& data, int heigh
 		//SetBlock(i, data[i]);
 		blocks[i] = data[i];
 	}
-
+	
 	for(int i = 0; i < 4; i++)
 		SetNeighbourDirty((NEIGHBOUR)i);
+
 
 	highestBlock = height;
 
@@ -529,8 +672,17 @@ void Chunk::GenerateMeshData() {
 			return;
 	}
 
+	if(!hasSunlight)
+		CreateSunlight();
+
 	if(!lightQueue.empty())
 		CalculateLight();
+
+	if(!sunlightRemoveQueue.empty())
+		CalculateSunlightRemoval();
+
+	if(!sunlightQueue.empty())
+		CalculateSunlight();
 
 	// Vertex Offset
 	const glm::vec3 offsets[] = {
@@ -593,18 +745,21 @@ void Chunk::GenerateMeshData() {
 					GetFaceAmbient(offsets[i], pos, ambient);
 
 					for(int verts = 0; verts < 4; verts++) {
+						// Vertices & Normals
 						BlockManager::GetMeshFace(block->meshType, (TextureIndex::Face)i, verts, pos, mesh->meshData);
 
+						// Texture Coords
 						mesh->meshData.emplace_back(texCoords[verts].x);
 						mesh->meshData.emplace_back(texCoords[verts].y);
 
+						// Ambient
 						mesh->meshData.emplace_back(ambient[verts]);
 
-						if(z + offsets[i].z < 0 && this->localCoord.x == 0 && this->localCoord.y == -1) {
-							int asd = 0;
-						}
+						// Light
+						mesh->meshData.emplace_back(GetLightNeighbourhood(x + offsets[i].x, y + offsets[i].y, z + offsets[i].z));
 
-						mesh->meshData.emplace_back(GetLightNeighbourHood(x + offsets[i].x, y + offsets[i].y, z + offsets[i].z));
+						// Sunlight
+						mesh->meshData.emplace_back(GetSunlightNeighbourhood(x + offsets[i].x, y + offsets[i].y, z + offsets[i].z));
 					}
 
 					mesh->indices.emplace_back(*indicesIndex + 0);
@@ -629,8 +784,7 @@ void Chunk::GenerateMeshData() {
 }
 
 void Chunk::CreateMesh() {
-
-	std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+	int size = 11 * sizeof(float);
 
 	// Generate Solid Buffers
 	if(solidMesh.meshData.size() > 0) {
@@ -648,12 +802,11 @@ void Chunk::CreateMesh() {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, solidMesh.ebo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * solidMesh.indices.size(), solidMesh.indices.data(), GL_DYNAMIC_DRAW);
 
-
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(0 * sizeof(float))); // Vertices
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(3 * sizeof(float))); // Normals
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(6 * sizeof(float))); // Tex Coords
-		glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(8 * sizeof(float))); // PVAO
-		glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(9 * sizeof(float)));
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, size, (void*)(0 * sizeof(float))); // Vertices
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size, (void*)(3 * sizeof(float))); // Normals
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, size, (void*)(6 * sizeof(float))); // Tex Coords
+		glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, size, (void*)(8 * sizeof(float))); // PVAO
+		glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, size, (void*)(9 * sizeof(float))); // LIGHT & SUNLIGHT
 
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
@@ -678,11 +831,11 @@ void Chunk::CreateMesh() {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, waterMesh.ebo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * waterMesh.indices.size(), waterMesh.indices.data(), GL_DYNAMIC_DRAW);
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(0 * sizeof(float))); // Vertices
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(3 * sizeof(float))); // Normals
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(6 * sizeof(float))); // Tex Coords
-		glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(8 * sizeof(float))); // PVAO
-		glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (void*)(9 * sizeof(float)));
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, size, (void*)(0 * sizeof(float))); // Vertices
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size, (void*)(3 * sizeof(float))); // Normals
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, size, (void*)(6 * sizeof(float))); // Tex Coords
+		glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, size, (void*)(8 * sizeof(float))); // PVAO
+		glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, size, (void*)(9 * sizeof(float))); // LIGHT & SUNLIGHT
 
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
@@ -698,12 +851,6 @@ void Chunk::CreateMesh() {
 	solidMesh.meshData.shrink_to_fit();
 	waterMesh.meshData.shrink_to_fit();
 	uploadMeshToGPU = false;
-
-	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-	//printf("Generation Duration: %f seconds\n", time_span.count());
-
-	DELETTHIS::AddTime(time_span.count());
 }
 
 #pragma endregion

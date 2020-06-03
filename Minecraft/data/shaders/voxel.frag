@@ -8,7 +8,7 @@ uniform sampler2D texture1;
 in vec2 _texCoords;
 in vec3 _normals;
 in float _ambient;
-in float _light;
+in vec2 _light;
 
 out vec4 FragColor;
 
@@ -25,12 +25,16 @@ float GetFaceLight(vec3 normal){
 
 void main()
 {
-	vec4 texel = texture(texture1, _texCoords);
-	if(texel.a < 0.5)
+	vec4 sample = texture(texture1, _texCoords);
+	if(sample.a < 0.5)
 		discard;
 
-	float lightSource = clamp(_light / 15.0, 0.3, 1.0);
-	float ambient = clamp(((_ambient + 1.0) / 4.0), 0.25, 1.0); 
+	float ambient = clamp((_ambient + 1.0) / 4.0, 0.50, 1.0); 
+	
+	float light = clamp(_light.x / 15.0, 0.0, 1.0);
+	float sun = clamp(_light.y / 15.0, 0.2, 1.0);
 
-	FragColor = vec4((texel.rgb * GetFaceLight(_normals) * ambient) * lightSource , texel.a); //* (_light / 16.0)
+	vec3 colour = (sample.rgb * GetFaceLight(_normals) * ambient) * max(light, sun);
+
+	FragColor = vec4(colour, sample.a);
 }

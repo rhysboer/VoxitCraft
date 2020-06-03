@@ -107,6 +107,12 @@ void EntityPlayer::OnUpdate() {
 				(int)hit.hitPosition.y,
 				(int)hit.hitPosition.z);
 	ImGui::Text("Light Level: %i", (hit.hit == true) ? World::GetChunkManager().FindChunk(hit.neighbourPosition)->GetLight(Math::Modulo(hit.neighbourPosition.x, Chunk::CHUNK_SIZE), hit.neighbourPosition.y, Math::Modulo(hit.neighbourPosition.z, Chunk::CHUNK_SIZE)) : 0);
+	ImGui::Text("Light Level In Block: %i ", (hit.hit == true) ? World::GetChunkManager().FindChunk(hit.hitPosition)->GetLight(Math::Modulo(hit.hitPosition.x, Chunk::CHUNK_SIZE), hit.hitPosition.y, Math::Modulo(hit.hitPosition.z, Chunk::CHUNK_SIZE)) : 0);
+	ImGui::Text("Sunlight Level: %i", (hit.hit == true) ? World::GetChunkManager().FindChunk(hit.neighbourPosition)->GetSunlight(Math::Modulo(hit.neighbourPosition.x, Chunk::CHUNK_SIZE), hit.neighbourPosition.y, Math::Modulo(hit.neighbourPosition.z, Chunk::CHUNK_SIZE)) : 0);
+	ImGui::Text("Sunlight Level In Block: %i ", (hit.hit == true) ? World::GetChunkManager().FindChunk(hit.hitPosition)->GetSunlight(Math::Modulo(hit.hitPosition.x, Chunk::CHUNK_SIZE), hit.hitPosition.y, Math::Modulo(hit.hitPosition.z, Chunk::CHUNK_SIZE)) : 0);
+
+
+	
 	ImGui::End();
 
 	// Crosshair

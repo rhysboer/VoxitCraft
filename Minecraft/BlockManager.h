@@ -69,14 +69,14 @@ struct BlockData {
 	SpriteSheet spriteSheet;
 	BlockIDs id;
 	const char* name;
-	bool isSolid;
+	bool walkThrough;
 	bool isTransparent;
 	bool useAmbient;
 	int lightLevel;
 	MeshType meshType;
 
-	BlockData(BlockIDs _id, const char* _name, bool transparent, bool solid, bool useAmbient, TextureIndex texture, int lightLevel = 0, MeshType mesh = MeshType::BLOCK, SpriteSheet spriteSheet = SpriteSheet::BLOCK)
-		: id(_id), name(_name), isTransparent(transparent), isSolid(solid), useAmbient(useAmbient), lightLevel(lightLevel), meshType(mesh), spriteSheet(spriteSheet) {
+	BlockData(BlockIDs _id, const char* _name, bool transparent, bool walkThrough, bool useAmbient, TextureIndex texture, int lightLevel = 0, MeshType mesh = MeshType::BLOCK, SpriteSheet spriteSheet = SpriteSheet::BLOCK)
+		: id(_id), name(_name), isTransparent(transparent), walkThrough(walkThrough), useAmbient(useAmbient), lightLevel(lightLevel), meshType(mesh), spriteSheet(spriteSheet) {
 		this->texture = texture;
 	}
 };
