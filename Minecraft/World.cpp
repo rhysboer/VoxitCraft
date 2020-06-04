@@ -24,6 +24,8 @@ World::~World() {
 }
 
 void World::Update() {
+	skybox->GetShader()->SetFloat("timeOfDay", Time::TotalTime());
+
 	chunkManager->Update();
 	EntityManager::Update();
 }

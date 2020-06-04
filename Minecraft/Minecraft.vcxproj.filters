@@ -61,6 +61,12 @@
     <Filter Include="Source Files\Engine\Camera">
       <UniqueIdentifier>{deaf513c-d9a2-4de4-b9fe-a09cf165276a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Engine\Particles">
+      <UniqueIdentifier>{b9e4c3ee-e770-4d69-8f54-e326a682f70b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Particles">
+      <UniqueIdentifier>{1b8e2541-f1a0-4f10-a06d-8f4a987ba8f5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

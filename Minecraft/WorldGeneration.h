@@ -20,6 +20,8 @@ enum class BiomeIndex {
 
 class WorldGeneration {
 public:
+	static void Init();
+
 	WorldGeneration(unsigned int heightMapSeed = 0, unsigned int moistureSeed = 0);
 	~WorldGeneration();
 

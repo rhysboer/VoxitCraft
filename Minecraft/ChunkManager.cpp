@@ -9,6 +9,8 @@ ChunkManager::ChunkManager() {
 	solidShader->SetTextureUnit("bloomTexture", 4);
 	waterShader->SetTextureUnit("texture1", 0);
 
+	WorldGeneration::Init();
+
 	chunkGenerationThread = new std::thread(&ChunkManager::ChunkLoader, this);
 
 	// TODO: Implement a loading wait
@@ -108,15 +110,8 @@ void ChunkManager::ChunkLoader() {
 }
 
 void ChunkManager::Update() {
-
-	if(Input::IsKeyPressed(GLFW_KEY_R)) {
-		glm::ivec2 currChunk = glm::ivec2(glm::floor(World::GetPlayer().GetPosition().x / Chunk::CHUNK_SIZE), glm::floor(World::GetPlayer().GetPosition().z / Chunk::CHUNK_SIZE));
-
-		FindChunkLock(currChunk)->CreateSunlight();
-		FindChunkLock(currChunk)->CalculateSunlight();
-
-	}
-
+	solidShader->SetFloat("timeOfDay", Time::TotalTime());
+	waterShader->SetFloat("timeOfDay", Time::TotalTime());
 }
 
 void ChunkManager::Render(BaseCamera& camera) {

@@ -22,6 +22,7 @@ void main()
 		result.rgb = mix(colour.rgb, vec3(0, 0.5, 1), clamp(pow(depth, 20.0), 0.0, 1.0));
 	}
 
+	// Add bloom onto the output
 	result += bloom;
 
 	FragColor = result;

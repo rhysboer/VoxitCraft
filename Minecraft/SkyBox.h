@@ -11,6 +11,7 @@ public:
 	~SkyBox();
 
 	void Render(BaseCamera& camera);
+	Shader* GetShader();
 
 private:
 

@@ -158,6 +158,14 @@ void Application::OnRender() {
 	
 
 
+	// TODO
+	/*
+		Add Particle System
+		Add Round Skybox DONE
+		Add Night & Day
+		Add Fog Distance
+		Improve Lighting Calculation
+	*/
 
 
 	bool horizontal = true, first_iteraion = true;

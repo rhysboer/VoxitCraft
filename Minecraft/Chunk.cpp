@@ -294,7 +294,8 @@ void Chunk::RemoveNeighbour(Chunk* neighbour) {
 void Chunk::GetFaceAmbient(const glm::ivec3& faceDirection, const glm::vec3& origin_local, std::array<int, 4>& blocks) {	
 	glm::vec3 offsets[9];
 
-	if(BlockManager::GetBlockData(GetBlockLocal(origin_local.x, origin_local.y, origin_local.z))->useAmbient == false) {
+	BlockData const* data = BlockManager::GetBlockData(GetBlockLocal(origin_local.x, origin_local.y, origin_local.z));
+	if(data->useAmbient == false) {
 		for(int i = 0; i < 4; i++)
 			blocks[i] = 3;
 
@@ -755,11 +756,18 @@ void Chunk::GenerateMeshData() {
 						// Ambient
 						mesh->meshData.emplace_back(ambient[verts]);
 
-						// Light
-						mesh->meshData.emplace_back(GetLightNeighbourhood(x + offsets[i].x, y + offsets[i].y, z + offsets[i].z));
+						if(block->isTransparent) {
+							// Light
+							mesh->meshData.emplace_back(GetLight(x, y, z));
+							// Sunlight
+							mesh->meshData.emplace_back(GetSunlight(x, y, z));
+						} else {
+							// Light
+							mesh->meshData.emplace_back(GetLightNeighbourhood(x + offsets[i].x, y + offsets[i].y, z + offsets[i].z));
+							// Sunlight
+							mesh->meshData.emplace_back(GetSunlightNeighbourhood(x + offsets[i].x, y + offsets[i].y, z + offsets[i].z));
+						}
 
-						// Sunlight
-						mesh->meshData.emplace_back(GetSunlightNeighbourhood(x + offsets[i].x, y + offsets[i].y, z + offsets[i].z));
 					}
 
 					mesh->indices.emplace_back(*indicesIndex + 0);

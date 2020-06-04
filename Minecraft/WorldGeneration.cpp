@@ -1,10 +1,12 @@
 #include "WorldGeneration.h"
 #include "ChunkManager.h"
 
+void WorldGeneration::Init() {
+	srand(time(NULL));
+}
+
 WorldGeneration::WorldGeneration(unsigned int heightMapSeed, unsigned int moistureSeed) {
 	// TODO: SEED RAND
-
-	//srand((chunk.worldCoord.x * chunk.worldCoord.z));	
 }
 
 WorldGeneration::~WorldGeneration() {
