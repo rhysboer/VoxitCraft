@@ -167,6 +167,8 @@
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Object3D.cpp" />
+    <ClCompile Include="ParticleEmitter.cpp" />
+    <ClCompile Include="ParticleSystem.cpp" />
     <ClCompile Include="PostProcess.cpp" />
     <ClCompile Include="Raycast.cpp" />
     <ClCompile Include="Renderer.cpp" />
@@ -216,6 +218,8 @@
     <ClInclude Include="imstb_truetype.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Object3D.h" />
+    <ClInclude Include="ParticleEmitter.h" />
+    <ClInclude Include="ParticleSystem.h" />
     <ClInclude Include="PostProcess.h" />
     <ClInclude Include="Raycast.h" />
     <ClInclude Include="Renderer.h" />

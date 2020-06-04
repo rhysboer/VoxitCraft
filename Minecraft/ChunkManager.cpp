@@ -202,9 +202,9 @@ void ChunkManager::Render(BaseCamera& camera) {
 	}
 	glEnable(GL_CULL_FACE);
 
-	ImGui::Begin("Render Info");
-	ImGui::Text("Rendered Chunks: %i / %i", renderCount, chunks.size());
-	ImGui::End();
+	//ImGui::Begin("Render Info");
+	//ImGui::Text("Rendered Chunks: %i / %i", renderCount, chunks.size());
+	//ImGui::End();
 
 }
 

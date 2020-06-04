@@ -207,6 +207,12 @@
     <ClCompile Include="AABB.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
+    <ClCompile Include="ParticleSystem.cpp">
+      <Filter>Source Files\Engine\Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleEmitter.cpp">
+      <Filter>Source Files\Engine\Particles</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -358,6 +364,12 @@
     </ClInclude>
     <ClInclude Include="AABB.h">
       <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleSystem.h">
+      <Filter>Header Files\Engine\Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleEmitter.h">
+      <Filter>Header Files\Engine\Particles</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

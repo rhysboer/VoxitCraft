@@ -5,6 +5,7 @@
 #include "EntityManager.h"
 #include "Entity.h"
 #include "SkyBox.h"
+#include "ParticleSystem.h"
 
 #include "EntityPlayer.h"
 #include "FPSCamera.h"
@@ -21,9 +22,13 @@ public:
 
 	static ChunkManager& GetChunkManager();
 	static EntityPlayer& GetPlayer();
+	static ParticleSystem& GetParticleManager();
+
+	static void CreateBreakParticleEffect(const BlockIDs& blockType, const glm::vec3& position);
 
 private:
 
+	static ParticleSystem* particleSystem;
 	static ChunkManager* chunkManager;
 	static EntityPlayer* player;
 

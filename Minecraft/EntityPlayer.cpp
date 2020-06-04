@@ -55,6 +55,7 @@ void EntityPlayer::OnUpdate() {
 		if(Input::IsMouseKeyPressed(GLFW_MOUSE_BUTTON_1)) {
 			Ray::RayHit hit = Ray::RaycastFromCamera(10.0f, *camera);
 
+			// Place Block
 			if(hit.hit) {
 				if(AABB::IsOverlapping(this->GetPosition(), size, hit.neighbourPosition + glm::vec3(0.5f, 0.5f, 0.5f), glm::ivec3(1)) == false) {
 					World::GetChunkManager().SetBlock(hit.neighbourPosition, (BlockIDs)currentBlock);
@@ -63,8 +64,10 @@ void EntityPlayer::OnUpdate() {
 		} else if(Input::IsMouseKeyPressed(GLFW_MOUSE_BUTTON_2)) {
 			Ray::RayHit hit = Ray::RaycastFromCamera(10.0f, *camera);
 
+			// Break block
 			if(hit.hit) {
 				World::GetChunkManager().SetBlock(hit.hitPosition, BlockIDs::AIR);
+				World::CreateBreakParticleEffect(hit.hitBlockType, hit.hitPosition);
 			}
 		}
 
@@ -94,26 +97,26 @@ void EntityPlayer::OnUpdate() {
 	Ray::RayHit hit = Ray::RaycastFromCamera(10.0f, *camera);
 	
 
-	ImGui::Begin("Info");
-	ImGui::Text("Position: X:%f, Y:%f, Z:%f", model->GetPosition().x, model->GetPosition().y, model->GetPosition().z);
-	ImGui::Text("Facing Direction: X:%i, Y:%i, Z:%i", (int)glm::round(camera->Forward().x), (int)glm::round(camera->Forward().y), (int)glm::round(camera->Forward().z));
-	ImGui::Text("Chunk: %i, %i", (int)glm::floor(model->GetPosition().x / 16.0f), (int)glm::floor(model->GetPosition().z / 16.0f));
-	ImGui::Text("Local Block: X:%i, Y:%i, Z:%i",
-				Math::Modulo((int)glm::floor(model->GetPosition().x), Chunk::CHUNK_SIZE),
-				Math::Modulo((int)glm::floor(model->GetPosition().y), Chunk::CHUNK_SIZE),
-				Math::Modulo((int)glm::floor(model->GetPosition().z), Chunk::CHUNK_SIZE));
-	ImGui::Text("Looking At Pos: X:%i, Y:%i, Z:%i",
-				(int)hit.hitPosition.x,
-				(int)hit.hitPosition.y,
-				(int)hit.hitPosition.z);
-	ImGui::Text("Light Level: %i", (hit.hit == true) ? World::GetChunkManager().FindChunk(hit.neighbourPosition)->GetLight(Math::Modulo(hit.neighbourPosition.x, Chunk::CHUNK_SIZE), hit.neighbourPosition.y, Math::Modulo(hit.neighbourPosition.z, Chunk::CHUNK_SIZE)) : 0);
-	ImGui::Text("Light Level In Block: %i ", (hit.hit == true) ? World::GetChunkManager().FindChunk(hit.hitPosition)->GetLight(Math::Modulo(hit.hitPosition.x, Chunk::CHUNK_SIZE), hit.hitPosition.y, Math::Modulo(hit.hitPosition.z, Chunk::CHUNK_SIZE)) : 0);
-	ImGui::Text("Sunlight Level: %i", (hit.hit == true) ? World::GetChunkManager().FindChunk(hit.neighbourPosition)->GetSunlight(Math::Modulo(hit.neighbourPosition.x, Chunk::CHUNK_SIZE), hit.neighbourPosition.y, Math::Modulo(hit.neighbourPosition.z, Chunk::CHUNK_SIZE)) : 0);
-	ImGui::Text("Sunlight Level In Block: %i ", (hit.hit == true) ? World::GetChunkManager().FindChunk(hit.hitPosition)->GetSunlight(Math::Modulo(hit.hitPosition.x, Chunk::CHUNK_SIZE), hit.hitPosition.y, Math::Modulo(hit.hitPosition.z, Chunk::CHUNK_SIZE)) : 0);
-
-
-	
-	ImGui::End();
+	//ImGui::Begin("Info");
+	//ImGui::Text("Position: X:%f, Y:%f, Z:%f", model->GetPosition().x, model->GetPosition().y, model->GetPosition().z);
+	//ImGui::Text("Facing Direction: X:%i, Y:%i, Z:%i", (int)glm::round(camera->Forward().x), (int)glm::round(camera->Forward().y), (int)glm::round(camera->Forward().z));
+	//ImGui::Text("Chunk: %i, %i", (int)glm::floor(model->GetPosition().x / 16.0f), (int)glm::floor(model->GetPosition().z / 16.0f));
+	//ImGui::Text("Local Block: X:%i, Y:%i, Z:%i",
+	//			Math::Modulo((int)glm::floor(model->GetPosition().x), Chunk::CHUNK_SIZE),
+	//			Math::Modulo((int)glm::floor(model->GetPosition().y), Chunk::CHUNK_SIZE),
+	//			Math::Modulo((int)glm::floor(model->GetPosition().z), Chunk::CHUNK_SIZE));
+	//ImGui::Text("Looking At Pos: X:%i, Y:%i, Z:%i",
+	//			(int)hit.hitPosition.x,
+	//			(int)hit.hitPosition.y,
+	//			(int)hit.hitPosition.z);
+	//ImGui::Text("Light Level: %i", (hit.hit == true) ? World::GetChunkManager().FindChunk(hit.neighbourPosition)->GetLight(Math::Modulo(hit.neighbourPosition.x, Chunk::CHUNK_SIZE), hit.neighbourPosition.y, Math::Modulo(hit.neighbourPosition.z, Chunk::CHUNK_SIZE)) : 0);
+	//ImGui::Text("Light Level In Block: %i ", (hit.hit == true) ? World::GetChunkManager().FindChunk(hit.hitPosition)->GetLight(Math::Modulo(hit.hitPosition.x, Chunk::CHUNK_SIZE), hit.hitPosition.y, Math::Modulo(hit.hitPosition.z, Chunk::CHUNK_SIZE)) : 0);
+	//ImGui::Text("Sunlight Level: %i", (hit.hit == true) ? World::GetChunkManager().FindChunk(hit.neighbourPosition)->GetSunlight(Math::Modulo(hit.neighbourPosition.x, Chunk::CHUNK_SIZE), hit.neighbourPosition.y, Math::Modulo(hit.neighbourPosition.z, Chunk::CHUNK_SIZE)) : 0);
+	//ImGui::Text("Sunlight Level In Block: %i ", (hit.hit == true) ? World::GetChunkManager().FindChunk(hit.hitPosition)->GetSunlight(Math::Modulo(hit.hitPosition.x, Chunk::CHUNK_SIZE), hit.hitPosition.y, Math::Modulo(hit.hitPosition.z, Chunk::CHUNK_SIZE)) : 0);
+	//
+	//
+	//
+	//ImGui::End();
 
 	// Crosshair
 	glm::vec2 windowSize = Engine::GetWindowSize();

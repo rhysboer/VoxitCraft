@@ -10,9 +10,9 @@ BaseCamera::BaseCamera(const glm::vec3& _position, const glm::vec3& _worldUp, co
 void BaseCamera::UpdateCamera() {
 
 	glm::vec3 temp = glm::vec3(0.0f);
-	temp.x = cos(glm::radians(yaw))* cos(glm::radians(pitch));
-	temp.y = sin(glm::radians(pitch));
-	temp.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	temp.x = glm::cos(glm::radians(yaw))* glm::cos(glm::radians(pitch));
+	temp.y = glm::sin(glm::radians(pitch));
+	temp.z = glm::sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
 	forward = glm::normalize(temp);
 
 	right = glm::normalize(glm::cross(forward, worldUp));
@@ -109,20 +109,6 @@ bool BaseCamera::IsAABBInFrustum(const AABB& aabb) {
 
 	return true;
 }
-
-
-//bool BaseCamera::IsAABBInFrustum(glm::vec3 point) {
-//	DIRTY_CHECK;
-//
-//	for(int i = 0; i < 6; i++) {
-//		if(glm::dot(glm::vec3(frustumPlanes[i]), point) + frustumPlanes[i].w < 0.0f) {
-//			return false;
-//		}
-//	}
-//
-//	return true;
-//}
-
 
 BaseCamera::BaseCamera(const BaseCamera& camera) {
 	for(int i = 0; i < 6; i++)

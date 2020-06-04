@@ -58,7 +58,7 @@ public: // Private
 	Chunk* FindChunk(const float& x, const float& z);
 
 private:
-	unsigned int RENDERING_DISTANCE = 24;
+	unsigned int RENDERING_DISTANCE = 1;
 	unsigned int DESTROY_DISTANCE = RENDERING_DISTANCE + 5;
 	
 	// Find a chunk that locks the mutex

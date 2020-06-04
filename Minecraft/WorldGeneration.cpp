@@ -51,26 +51,26 @@ unsigned int WorldGeneration::CreateChunkWorldData(const Chunk& chunk, std::arra
 					data[blockIndex] = BlockIDs::GRASS;	//chunk.SetBlock(blockIndex, BlockIDs::GRASS);
 
 				// Semi Flat
-				//if(mapHeight < 5)
-				//	data[blockIndex] = block;
+				if(mapHeight < 5)
+					data[blockIndex] = block;
 
 				// Water
-				if(y < 16 && height == 0) {
-					data[blockIndex] = BlockIDs::SAND; //chunk.SetBlock(blockIndex, BlockIDs::SAND);
-				} else if(y > mapHeight&& y < 15) {
-					data[blockIndex] = BlockIDs::WATER; //chunk.SetBlock(blockIndex, BlockIDs::WATER);
-				} else if(data[blockIndex] == BlockIDs::AIR) {
-					data[blockIndex] = block; //chunk.SetBlock(blockIndex, block);
-				}
-				
-				if(height == 1 && y > waterLevel) {
-					if(biome->GetGenerationParameters().structureDensity <= 0)
-						continue;
-				
-					if(rand() % biome->GetGenerationParameters().structureDensity == 1) {
-						treePositions.emplace_back(x, y, z);
-					}
-				}
+				//if(y < 16 && height == 0) {
+				//	data[blockIndex] = BlockIDs::SAND; //chunk.SetBlock(blockIndex, BlockIDs::SAND);
+				//} else if(y > mapHeight&& y < 15) {
+				//	data[blockIndex] = BlockIDs::WATER; //chunk.SetBlock(blockIndex, BlockIDs::WATER);
+				//} else if(data[blockIndex] == BlockIDs::AIR) {
+				//	data[blockIndex] = block; //chunk.SetBlock(blockIndex, block);
+				//}
+				//
+				//if(height == 1 && y > waterLevel) {
+				//	if(biome->GetGenerationParameters().structureDensity <= 0)
+				//		continue;
+				//
+				//	if(rand() % biome->GetGenerationParameters().structureDensity == 1) {
+				//		treePositions.emplace_back(x, y, z);
+				//	}
+				//}
 			}
 		}
 	}
