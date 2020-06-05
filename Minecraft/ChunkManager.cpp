@@ -241,6 +241,21 @@ BlockIDs ChunkManager::GetBlockLock(const float& x, const float& y, const float&
 	return GetBlock(x, y, z);
 }
 
+int ChunkManager::GetLightLevelAtBlock(const float& x, const float& y, const float& z) {
+	Chunk* chunk = FindChunkLock(glm::ivec2(std::floor(x / Chunk::CHUNK_SIZE), std::floor(z / Chunk::CHUNK_SIZE)));
+
+	if(chunk == nullptr)
+		return 15;
+
+	if(y < 0 || y >= Chunk::CHUNK_HEIGHT)
+		return 15;
+
+	int light = chunk->GetLight(x - chunk->worldCoord.x, y, z - chunk->worldCoord.z);
+	int sun = chunk->GetSunlight(x - chunk->worldCoord.x, y, z - chunk->worldCoord.z);
+
+	return glm::max(sun, light);
+}
+
 void ChunkManager::SetBlock(const glm::vec3& worldPosition, const BlockIDs& block) {
 	return SetBlock(worldPosition.x, worldPosition.y, worldPosition.z, block);
 }

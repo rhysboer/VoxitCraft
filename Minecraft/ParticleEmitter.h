@@ -13,6 +13,7 @@ struct Particle {
 struct ParticleVertex {
 	glm::vec3 position;
 	glm::vec2 texCoords;
+	float lightLevel;
 };
 
 class BaseCamera;

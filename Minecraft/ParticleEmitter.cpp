@@ -2,6 +2,7 @@
 #include "Time.h"
 #include "BaseCamera.h"
 #include "World.h"
+#include "ChunkManager.h"
 
 ParticleEmitter::ParticleEmitter(glm::vec3 position, const unsigned int& maxParticles, const BlockIDs& block) : totalParticles(maxParticles) {
 	// Data of each particle
@@ -33,9 +34,14 @@ ParticleEmitter::ParticleEmitter(glm::vec3 position, const unsigned int& maxPart
 		texTopLeft.y -= offsetY * ((rand() % 5) + 1);
 
 		particleVertex[(i * 4) + 0].texCoords = glm::vec2(texTopLeft.x, texTopLeft.y - offsetY);			// 1 | 0,1
+		particleVertex[(i * 4) + 0].lightLevel = 15.0f;
 		particleVertex[(i * 4) + 1].texCoords = glm::vec2(texTopLeft.x, texTopLeft.y);						// 2 | 0,0
+		particleVertex[(i * 4) + 1].lightLevel = 15.0f;
 		particleVertex[(i * 4) + 2].texCoords = glm::vec2(texTopLeft.x + offsetX, texTopLeft.y);			// 3 | 1,0
+		particleVertex[(i * 4) + 2].lightLevel = 15.0f;
 		particleVertex[(i * 4) + 3].texCoords = glm::vec2(texTopLeft.x + offsetX, texTopLeft.y - offsetY);	// 0 | 1,1
+		particleVertex[(i * 4) + 3].lightLevel = 15.0f;
+		
 
 		vertexIndexes[(i * 6) + 0] = (i * 4) + 0;
 		vertexIndexes[(i * 6) + 1] = (i * 4) + 1;
@@ -59,12 +65,15 @@ ParticleEmitter::ParticleEmitter(glm::vec3 position, const unsigned int& maxPart
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, maxParticles * 6 * sizeof(unsigned int), vertexIndexes, GL_STATIC_DRAW);
 
 	// Position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(0 * sizeof(float)));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(0 * sizeof(float)));
 	glEnableVertexAttribArray(0);
 
 	// Texcoords
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(5 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
 
@@ -97,10 +106,16 @@ void ParticleEmitter::Render(BaseCamera& camera) {
 		CheckCollision(*particle);
 		particle->position += particle->velocity * Time::DeltaTime();
 
+		float lightLevel = World::GetChunkManager().GetLightLevelAtBlock(particle->position.x, particle->position.y, particle->position.z);
 		particleVertex[(i * 4) + 0].position = billboard * glm::vec3(-size, -size, 0) + particle->position;
+		particleVertex[(i * 4) + 0].lightLevel = lightLevel;
 		particleVertex[(i * 4) + 1].position = billboard * glm::vec3(-size, size, 0) + particle->position;
+		particleVertex[(i * 4) + 1].lightLevel = lightLevel;
 		particleVertex[(i * 4) + 2].position = billboard * glm::vec3(size, size, 0) + particle->position;
+		particleVertex[(i * 4) + 2].lightLevel = lightLevel;
 		particleVertex[(i * 4) + 3].position = billboard * glm::vec3(size, -size, 0) + particle->position;
+		particleVertex[(i * 4) + 3].lightLevel = lightLevel;
+
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -108,6 +123,7 @@ void ParticleEmitter::Render(BaseCamera& camera) {
 
 	shader->SetMatrix4("projectionView", camera.ProjectionView());
 	shader->SetTextureUnit("terrainTexture", 4);
+	shader->SetFloat("timeOfDay", Time::TotalTime());
 
 	BlockManager::GetTileMap(SpriteSheet::BLOCK)->BindTexture(4);
 
@@ -143,6 +159,9 @@ void ParticleEmitter::CheckCollision(Particle& particle) const {
 		particle.position.y = glm::floor(particle.position.y);
 		particle.velocity.y = 0;
 		pos.y = particle.position.y;
+		particle.velocity.x *= 0.9f;
+		particle.velocity.z *= 0.9f;
+
 	}
 }
 
