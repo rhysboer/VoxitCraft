@@ -25,7 +25,7 @@ void Application::OnStart() {
 	world = new World();
 
 	// Post processing
-	postProcessing = new PostProcess("postProcess", 1280, 720, FramebufferType::COLOUR_TEX_DEPTH_TEX, 2);
+	postProcessing = new PostProcess("postProcess", lastResolution.x, lastResolution.y, FramebufferType::COLOUR_TEX_DEPTH_TEX, 2);
 	postProcessing->GetShader().SetTextureUnit("screenColour", 0);
 	postProcessing->GetShader().SetTextureUnit("screenBloom", 1);
 	postProcessing->GetShader().SetTextureUnit("screenDepth", 2);
@@ -37,7 +37,7 @@ void Application::OnStart() {
 	blurShader = ShaderManager::AddShader("blur");
 	
 	for(int i = 0; i < 2; i++)
-		pingpongBuffer[i] = new Framebuffer(glm::ivec2(1280, 720), FramebufferType::COLOUR_TEX);
+		pingpongBuffer[i] = new Framebuffer(glm::ivec2(lastResolution.x, lastResolution.y), FramebufferType::COLOUR_TEX);
 
 
 	camera2D = new Camera2D(glm::vec3(0, 4, -10), glm::vec3(0), -1.6f, 1.6f, -1.6f, 1.6f, 0.1f, 100.0f);
@@ -152,21 +152,11 @@ void Application::OnRender() {
 		if(hit.hit) {
 			blockHighlight->GetTransform().SetPosition(hit.hitPosition + glm::vec3(0.5f));
 			blockHighlight->Render(*World::GetPlayer().Camera());
-		}		
+		}
+
+		//skyOrbits->Render(*World::GetPlayer().Camera());
 	}
 	postProcessing->End();
-	
-
-
-	// TODO
-	/*
-		Add Particle System
-		Add Round Skybox DONE
-		Add Night & Day
-		Add Fog Distance
-		Improve Lighting Calculation
-	*/
-
 
 	bool horizontal = true, first_iteraion = true;
 	int amount = 10;
@@ -275,14 +265,14 @@ void Application::SetupObjects() {
 			 -1.0f, 1.0f, 1.0f,		-1.0f, 0.0f, 0.0f,	 1.0f, 0.0f,	 3.0f,
 			 -1.0f,-1.0f,-1.0f,		-1.0f, 0.0f, 0.0f,	 0.0f, 1.0f,	 3.0f,
 
-			// TOP					
-			-1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f,	 0.0f, 0.0f,	 4.0f,
-			-1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f,	 0.0f, 1.0f,	 4.0f,
-			 1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f,	 1.0f, 0.0f,	 4.0f,
+			 // TOP					
+			 -1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f,	 0.0f, 0.0f,	 4.0f,
+			 -1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f,	 0.0f, 1.0f,	 4.0f,
+			  1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f,	 1.0f, 0.0f,	 4.0f,
 
-			 1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f,	 1.0f, 1.0f,	 4.0f,
-			 1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f,	 1.0f, 0.0f,	 4.0f,
-			-1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f,	 0.0f, 1.0f,	 4.0f,
+			  1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f,	 1.0f, 1.0f,	 4.0f,
+			  1.0f, 1.0f, 1.0f,		 0.0f, 1.0f, 0.0f,	 1.0f, 0.0f,	 4.0f,
+			 -1.0f, 1.0f,-1.0f,		 0.0f, 1.0f, 0.0f,	 0.0f, 1.0f,	 4.0f,
 
 			 // BOT				
 			-1.0f,-1.0f,-1.0f,		 0.0f,-1.0f, 0.0f,	 0.0f, 0.0f,	 5.0f,
@@ -374,11 +364,11 @@ void Application::SetupObjects() {
 			-0.8535f,-1.0f, 0.8535f,	0.0, 1.0f, 0.0f,	0.0f, 1.0f,		2.0f,
 			-0.8535f, 1.0f, 0.8535f,	0.0, 1.0f, 0.0f,	0.0f, 0.0f,		2.0f,
 			0.8535f, 1.0f, -0.8535f,	0.0, 1.0f, 0.0f,	1.0f, 0.0f,		2.0f,
-			
+
 			-0.8535f, -1.0f, 0.8535f,	0.0, 1.0f, 0.0f,	0.0f, 1.0f,		3.0f,
 			0.8535f, 1.0f, -0.8535f,	0.0, 1.0f, 0.0f,	1.0f, 0.0f,		3.0f,
 			0.8535f, -1.0f, -0.8535f,	0.0, 1.0f, 0.0f,	1.0f, 1.0f,		3.0f,
-			
+
 			-0.8535f,-1.0f, 0.8535f,	0.0, 1.0f, 0.0f,	0.0f, 1.0f,		2.0f,
 			0.8535f, 1.0f, -0.8535f,	0.0, 1.0f, 0.0f,	1.0f, 0.0f,		2.0f,
 			-0.8535f, 1.0f, 0.8535f,	0.0, 1.0f, 0.0f,	0.0f, 0.0f,		2.0f,
@@ -393,7 +383,7 @@ void Application::SetupObjects() {
 	// Block Attributes
 	std::vector<int> attributes = std::vector<int>({
 		3, 3, 2, 1
-	});
+												   });
 
 	blockShader = ShaderManager::AddShader("voxelSelected");
 	float textureIndex[6];
@@ -420,15 +410,45 @@ void Application::SetupObjects() {
 		-1.0f,  1.0f,  0.0f, 1.0f,
 		-1.0f, -1.0f,  0.0f, 0.0f,
 		 1.0f, -1.0f,  1.0f, 0.0f,
-	
+
 		-1.0f,  1.0f,  0.0f, 1.0f,
 		 1.0f, -1.0f,  1.0f, 0.0f,
 		 1.0f,  1.0f,  1.0f, 1.0f
-	});
-	
+												 });
+
 	std::vector<int> quadAttrib = std::vector<int>({ 2, 2 });
-	
+
 	screenQuad = new Object3D(glm::vec3(0), quad, quadAttrib);
 	screenQuad->SetShader(blurShader);
+
+
+	// Sun & Moon
+
+	std::vector<float> orbitsQuad = std::vector<float>(
+		{
+			-1.0f, -1.0f, 1.0f,	 0.0f, 0.0f,
+			-1.0f, 1.0f, 1.0f,	 0.0f, 1.0f,
+			1.0f, 1.0f, 1.0f,	 1.0f, 1.0f,
+
+			-1.0f, -1.0f, 1.0f,	 0.0f, 0.0f,
+			1.0f, 1.0f, 1.0f,	 1.0f, 1.0f,
+			1.0f, -1.0f, 1.0f,	 1.0f, 0.0f,
+
+
+			-1.0f, 1.0f,-1.0f,	 0.0f, 1.0f,
+			-1.0f, -1.0f,-1.0f,	 0.0f, 0.0f,
+			1.0f, 1.0f,-1.0f,	 1.0f, 1.0f,
+
+			1.0f, 1.0f,-1.0f,	 1.0f, 1.0f,
+			-1.0f, -1.0f,-1.0f,	 0.0f, 0.0f,
+			1.0f, -1.0f,-1.0f,	 1.0f, 0.0f
+		}
+	);
+
+	std::vector<int> orbitsAttrib = std::vector<int>({ 3, 2 });
+
+	//skyOrbits = new Object3D(glm::vec3(0, 38, 0), orbitsQuad, orbitsAttrib);
+	//skyOrbits->SetShader(ShaderManager::GetShader("default"));
+
 }
 

@@ -42,10 +42,13 @@ private:
 	PostProcessEffect effect;
 	PostProcess* postProcessing;
 	
+
 	Framebuffer* pingpongBuffer[2];
 	Object3D* screenQuad;
 	Shader* blurShader;
 	
+	//Object3D* skyOrbits;
+
 	// Held Block Preview
 	Framebuffer* blockBuffer;
 	Object3D* selectedBlock[3];

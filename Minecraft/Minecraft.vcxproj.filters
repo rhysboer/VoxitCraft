@@ -192,9 +192,6 @@
     <ClCompile Include="Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DELETTHIS.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="BaseCamera.cpp">
       <Filter>Source Files\Engine\Camera</Filter>
     </ClCompile>
@@ -349,9 +346,6 @@
     </ClInclude>
     <ClInclude Include="Raycast.h">
       <Filter>Header Files\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="DELETTHIS.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BaseCamera.h">
       <Filter>Header Files\Engine\Camera</Filter>
